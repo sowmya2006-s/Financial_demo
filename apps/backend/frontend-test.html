@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moolah Minds Backend Test UI</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    h1 { margin-bottom: 0.25em; }
+    section { margin-bottom: 24px; padding: 16px; border: 1px solid #ddd; border-radius: 8px; }
+    label { display: block; margin: 8px 0 4px; }
+    input, select, button, textarea { width: 100%; max-width: 500px; padding: 8px; margin-bottom: 8px; box-sizing: border-box; }
+    button { width: auto; cursor: pointer; }
+    pre { white-space: pre-wrap; background: #f7f7f7; padding: 12px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Moolah Minds Backend Test UI</h1>
+  <p>Use this page to test the backend API at <code>http://localhost:3000</code>.</p>
+
+  <section>
+    <h2>Server health</h2>
+    <button id="healthBtn">Check health</button>
+    <pre id="healthResult">Not checked yet.</pre>
+  </section>
+
+  <section>
+    <h2>Register</h2>
+    <label for="regEmail">Email</label>
+    <input id="regEmail" type="email" placeholder="user@example.com" />
+    <label for="regName">Name</label>
+    <input id="regName" type="text" placeholder="Jane Doe" />
+    <label for="regPassword">Password</label>
+    <input id="regPassword" type="password" placeholder="secret" />
+    <button id="registerBtn">Register</button>
+    <pre id="registerResult">Ready to register.</pre>
+  </section>
+
+  <section>
+    <h2>Login</h2>
+    <label for="loginEmail">Email</label>
+    <input id="loginEmail" type="email" placeholder="user@example.com" />
+    <label for="loginPassword">Password</label>
+    <input id="loginPassword" type="password" placeholder="secret" />
+    <button id="loginBtn">Login</button>
+    <pre id="loginResult">Not logged in.</pre>
+  </section>
+
+  <section>
+    <h2>Authenticated actions</h2>
+    <p>JWT token is stored in local state below.</p>
+    <pre id="tokenDisplay">No token yet.</pre>
+    <button id="logoutBtn">Clear token</button>
+  </section>
+
+  <section>
+    <h2>Create Profile</h2>
+    <label for="profileName">Profile name</label>
+    <input id="profileName" type="text" placeholder="My profile" />
+    <label for="profileDifficulty">Difficulty</label>
+    <select id="profileDifficulty">
+      <option value="BEGINNER">BEGINNER</option>
+      <option value="STANDARD">STANDARD</option>
+      <option value="HARD">HARD</option>
+    </select>
+    <button id="createProfileBtn">Create profile</button>
+    <pre id="createProfileResult">No action yet.</pre>
+  </section>
+
+  <section>
+    <h2>Profiles</h2>
+    <button id="listProfilesBtn">List my profiles</button>
+    <label for="profileId">Profile ID</label>
+    <input id="profileId" type="text" placeholder="profile-uuid" />
+    <button id="getProfileBtn">Get profile by ID</button>
+    <pre id="profilesResult">Ready to fetch profiles.</pre>
+  </section>
+
+  <script>
+    const apiBase = 'http://localhost:3000';
+    let token = '';
+
+    const setResult = (id, text) => document.getElementById(id).textContent = text;
+    const authHeaders = () => token ? { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+    const updateTokenDisplay = () => document.getElementById('tokenDisplay').textContent = token || 'No token yet.';
+
+    document.getElementById('healthBtn').addEventListener('click', async () => {
+      const res = await fetch(`${apiBase}/health`);
+      const data = await res.json();
+      setResult('healthResult', JSON.stringify({ status: res.status, body: data }, null, 2));
+    });
+
+    document.getElementById('registerBtn').addEventListener('click', async () => {
+      const email = document.getElementById('regEmail').value;
+      const name = document.getElementById('regName').value;
+      const password = document.getElementById('regPassword').value;
+      const res = await fetch(`${apiBase}/auth/register`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ email, name, password }),
+      });
+      const data = await res.json();
+      setResult('registerResult', JSON.stringify({ status: res.status, body: data }, null, 2));
+    });
+
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const res = await fetch(`${apiBase}/auth/login`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      setResult('loginResult', JSON.stringify({ status: res.status, body: data }, null, 2));
+      if (res.ok && data.token) {
+        token = data.token;
+        updateTokenDisplay();
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      token = '';
+      updateTokenDisplay();
+      setResult('loginResult', 'Token cleared.');
+    });
+
+    document.getElementById('createProfileBtn').addEventListener('click', async () => {
+      const name = document.getElementById('profileName').value;
+      const difficulty = document.getElementById('profileDifficulty').value;
+      const res = await fetch(`${apiBase}/profiles`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ name, difficulty }),
+      });
+      const data = await res.json();
+      setResult('createProfileResult', JSON.stringify({ status: res.status, body: data }, null, 2));
+    });
+
+    document.getElementById('listProfilesBtn').addEventListener('click', async () => {
+      const res = await fetch(`${apiBase}/profiles`, {
+        method: 'GET',
+        headers: authHeaders(),
+      });
+      const data = await res.json();
+      setResult('profilesResult', JSON.stringify({ status: res.status, body: data }, null, 2));
+    });
+
+    document.getElementById('getProfileBtn').addEventListener('click', async () => {
+      const id = document.getElementById('profileId').value;
+      if (!id) {
+        setResult('profilesResult', 'Please enter a profile ID.');
+        return;
+      }
+      const res = await fetch(`${apiBase}/profiles/${encodeURIComponent(id)}`, {
+        method: 'GET',
+        headers: authHeaders(),
+      });
+      const data = await res.json();
+      setResult('profilesResult', JSON.stringify({ status: res.status, body: data }, null, 2));
+    });
+
+    updateTokenDisplay();
+  </script>
+</body>
+</html>

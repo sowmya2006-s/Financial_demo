@@ -1,63 +1,28 @@
-import 'dotenv/config';
-import express, { Express, Request, Response } from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import { errorHandler } from '@backend/middleware/error';
-import healthRoutes from '@backend/routes/health';
+// src/server.ts
+// HTTP server entry point.
+// Loads environment variables, starts the Express app, handles graceful shutdown.
 
-const app: Express = express();
-const PORT = process.env.PORT || 3000;
+import { env } from './config/env';
+import app from './app';
+import prisma from './config/prisma';
 
-// Middleware
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
+const server = app.listen(env.port, () => {
+  console.log(`[server] Moolah Minds backend running on port ${env.port} (${env.nodeEnv})`);
+});
 
-// Request logging (development)
-if (process.env.NODE_ENV === 'development') {
-  app.use((req: Request, _res: Response, next) => {
-    console.log(`📍 ${req.method} ${req.path}`);
-    next();
+// ─── Graceful Shutdown ────────────────────────────────────────────────────────
+// Closes open connections cleanly on SIGTERM / SIGINT (e.g. Docker stop, Ctrl+C)
+
+async function shutdown(): Promise<void> {
+  console.log('[server] Shutting down gracefully...');
+  server.close(async () => {
+    await prisma.$disconnect();
+    console.log('[server] Database disconnected. Exiting.');
+    process.exit(0);
   });
 }
 
-// Routes
-app.use('/', healthRoutes);
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
-// API Routes placeholder
-app.get('/api', (_req: Request, res: Response) => {
-  res.json({
-    message: 'Moolah Minds API',
-    version: '0.1.0',
-    status: 'running',
-  });
-});
-
-// 404 handler
-app.use((_req: Request, res: Response) => {
-  res.status(404).json({
-    success: false,
-    error: 'Not Found',
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Error handling middleware (must be last)
-app.use(errorHandler);
-
-// Start server
-const server = app.listen(PORT, () => {
-  console.log(`✨ Server running on http://localhost:${PORT}`);
-  console.log(`📊 API: http://localhost:${PORT}/api`);
-  console.log(`🏥 Health: http://localhost:${PORT}/health`);
-  console.log(`📚 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('⏹️  Shutting down gracefully...');
-  server.close(() => {
-    console.log('✅ Server closed');
-    process.exit(0);
-  });
-});
+export default server;

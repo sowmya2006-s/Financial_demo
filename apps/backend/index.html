@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moolah Minds | Functional Portal</title>
+    <style>
+        body { font-family: monospace; background: #fff; color: #000; padding: 20px; line-height: 1.5; }
+        h1, h2 { border-bottom: 2px solid #000; padding-bottom: 5px; }
+        section { margin-bottom: 40px; padding: 20px; border: 1px solid #000; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #000; margin-bottom: 10px; font-family: inherit; }
+        button { background: #000; color: #fff; border: none; padding: 10px 20px; cursor: pointer; font-family: inherit; font-weight: bold; }
+        button:hover { background: #333; }
+        pre { background: #eee; padding: 15px; overflow-x: auto; border: 1px dashed #000; font-size: 12px; }
+        .status { margin-top: 10px; font-weight: bold; }
+        .profile-card { border: 1px solid #000; padding: 10px; margin-bottom: 10px; }
+        .delete-btn { background: #f00; color: #fff; padding: 5px 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>MOOLAH MINDS | FUNCTIONAL PORTAL</h1>
+    <p>Simplified interface for backend verification (Week 1-3).</p>
+
+    <div class="grid">
+        <!-- AUTH SECTION -->
+        <section>
+            <h2>1. AUTHENTICATION</h2>
+            <div id="authForms">
+                <div>
+                    <h3>Register</h3>
+                    <label>Name</label>
+                    <input type="text" id="regName" placeholder="Full Name">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="email@example.com">
+                    <label>Password (8+ chars, 1 Upper, 1 Num)</label>
+                    <input type="password" id="regPass" placeholder="••••••••">
+                    <button onclick="handleRegister()">REGISTER</button>
+                </div>
+                <hr>
+                <div>
+                    <h3>Login</h3>
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="email@example.com">
+                    <label>Password</label>
+                    <input type="password" id="loginPass" placeholder="••••••••">
+                    <button onclick="handleLogin()">LOGIN</button>
+                </div>
+            </div>
+            <div id="authStatus" class="status">Not logged in.</div>
+            <button id="logoutBtn" style="display:none;" onclick="handleLogout()">LOGOUT</button>
+        </section>
+
+        <!-- DATA LOG -->
+        <section>
+            <h2>2. SYSTEM RESPONSE (JSON)</h2>
+            <pre id="jsonOutput">Waiting for action...</pre>
+        </section>
+    </div>
+
+    <!-- PROFILE MANAGEMENT -->
+    <section id="profileSection" style="display:none;">
+        <h2>3. PROFILE MANAGEMENT</h2>
+        <div class="grid">
+            <div>
+                <h3>Create New Profile</h3>
+                <label>Profile Name</label>
+                <input type="text" id="profName" placeholder="e.g. My Career">
+                <label>Difficulty</label>
+                <select id="profDiff">
+                    <option value="BEGINNER">BEGINNER</option>
+                    <option value="STANDARD">STANDARD</option>
+                    <option value="HARD">HARD</option>
+                </select>
+                <button onclick="handleCreateProfile()">CREATE PROFILE</button>
+            </div>
+            <div>
+                <h3>Your Profiles</h3>
+                <button onclick="loadProfiles()">REFRESH LIST</button>
+                <div id="profileList" style="margin-top:20px;"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DETAILED VIEW -->
+    <section id="detailSection" style="display:none;">
+        <h2>4. DETAILED STATE (METRICS & COHORT)</h2>
+        <div id="detailView"></div>
+    </section>
+
+    <script>
+        const API = 'http://localhost:3000';
+        let TOKEN = localStorage.getItem('moolah_token');
+
+        function updateUI() {
+            if (TOKEN) {
+                document.getElementById('authForms').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'block';
+                document.getElementById('profileSection').style.display = 'block';
+                document.getElementById('authStatus').textContent = 'Logged in.';
+                loadProfiles();
+            } else {
+                document.getElementById('authForms').style.display = 'block';
+                document.getElementById('logoutBtn').style.display = 'none';
+                document.getElementById('profileSection').style.display = 'none';
+                document.getElementById('detailSection').style.display = 'none';
+                document.getElementById('authStatus').textContent = 'Not logged in.';
+            }
+        }
+
+        async function apiCall(path, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (TOKEN) options.headers['Authorization'] = `Bearer ${TOKEN}`;
+            if (body) options.body = JSON.stringify(body);
+
+            try {
+                const res = await fetch(`${API}${path}`, options);
+                const data = await res.json();
+                document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
+                if (!res.ok) throw new Error(data.error || 'API Error');
+                return data;
+            } catch (err) {
+                alert(err.message);
+                if (err.message.includes('token')) handleLogout();
+                return null;
+            }
+        }
+
+        async function handleRegister() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPass').value;
+            const data = await apiCall('/auth/register', 'POST', { name, email, password });
+            if (data) alert('Registration successful! Please login.');
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPass').value;
+            const data = await apiCall('/auth/login', 'POST', { email, password });
+            if (data && data.token) {
+                TOKEN = data.token;
+                localStorage.setItem('moolah_token', TOKEN);
+                updateUI();
+            }
+        }
+
+        function handleLogout() {
+            TOKEN = null;
+            localStorage.removeItem('moolah_token');
+            updateUI();
+        }
+
+        async function handleCreateProfile() {
+            const name = document.getElementById('profName').value;
+            const difficulty = document.getElementById('profDiff').value;
+            const data = await apiCall('/profiles', 'POST', { name, difficulty });
+            if (data) loadProfiles();
+        }
+
+        async function loadProfiles() {
+            const data = await apiCall('/profiles');
+            const list = document.getElementById('profileList');
+            list.innerHTML = '';
+            if (data && data.profiles) {
+                data.profiles.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'profile-card';
+                    div.innerHTML = `
+                        <strong>${p.name}</strong> (${p.difficulty})<br>
+                        <small>ID: ${p.id}</small><br>
+                        <button onclick="viewProfile('${p.id}')">VIEW DETAILS</button>
+                        <button class="delete-btn" onclick="deleteProfile('${p.id}')">DELETE</button>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+        }
+
+        async function viewProfile(id) {
+            const data = await apiCall(`/profiles/${id}`);
+            if (data && data.profile) {
+                const p = data.profile;
+                document.getElementById('detailSection').style.display = 'block';
+                document.getElementById('detailView').innerHTML = `
+                    <h3>Profile: ${p.name}</h3>
+                    <div class="grid">
+                        <div>
+                            <h4>METRICS (Game State)</h4>
+                            <ul>
+                                <li>Salary: ${p.gameState.salary / 100} units</li>
+                                <li>Credit Score: ${p.gameState.creditScore}</li>
+                                <li>Social Score: ${p.gameState.socialScore}</li>
+                                <li>Well-being: ${p.gameState.wellBeing}</li>
+                                <li>Status: ${p.gameState.status}</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4>TRACKING (Cohort)</h4>
+                            <ul>
+                                <li>Cohort ID: ${p.cohortId}</li>
+                                <li>Week Key: ${p.cohort.weekKey}</li>
+                                <li>Started At: ${new Date(p.cohort.startedAt).toLocaleDateString()}</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('detailSection').scrollIntoView();
+            }
+        }
+
+        async function deleteProfile(id) {
+            if (!confirm('Are you sure?')) return;
+            const data = await apiCall(`/profiles/${id}`, 'DELETE');
+            if (data) loadProfiles();
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>

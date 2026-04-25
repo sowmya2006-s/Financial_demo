@@ -1,0 +1,74 @@
+// src/api/profileController.ts
+// RULE: Controllers only validate request shape and delegate to services.
+// NO business logic here. NO database calls here.
+
+import { Router, Request, Response, NextFunction } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { profileService } from '../services/profileService';
+
+const router = Router();
+
+// All profile routes require authentication
+router.use(requireAuth);
+
+/**
+ * POST /profiles
+ * Creates a new game profile for the authenticated user.
+ * Body: { name: string, difficulty: 'BEGINNER' | 'STANDARD' | 'HARD' }
+ */
+router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { name, difficulty } = req.body;
+
+    if (!name || !difficulty) {
+      res.status(400).json({ error: 'name and difficulty are required', code: 'MISSING_FIELDS' });
+      return;
+    }
+
+    const profile = await profileService.createProfile(req.user!.userId, { name, difficulty });
+    res.status(201).json({ profile });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /profiles
+ * Lists all profiles belonging to the authenticated user.
+ */
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const profiles = await profileService.listProfiles(req.user!.userId);
+    res.status(200).json({ profiles });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /profiles/:id
+ * Fetches a single profile (must belong to the authenticated user).
+ */
+router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const profile = await profileService.getProfile(req.user!.userId, req.params['id']!);
+    res.status(200).json({ profile });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * DELETE /profiles/:id
+ * Deletes a profile.
+ */
+router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await profileService.deleteProfile(req.user!.userId, req.params['id']!);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+export default router;

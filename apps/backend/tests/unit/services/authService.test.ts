@@ -24,7 +24,7 @@ const mockUserRepo = userRepository as jest.Mocked<typeof userRepository>;
 const validRegisterInput = {
   email: 'alice@example.com',
   name: 'Alice Smith',
-  password: 'SecurePass1',
+  password: 'SecurePass1!',
 };
 
 const mockUser = {
@@ -113,12 +113,12 @@ describe('authService.login', () => {
   it('returns a token and user when credentials are correct', async () => {
     // Use a real bcrypt hash for the test password so comparison works
     const bcrypt = await import('bcrypt');
-    const hash = await bcrypt.hash('SecurePass1', 1);
+    const hash = await bcrypt.hash('SecurePass1!', 1);
     mockUserRepo.findByEmail.mockResolvedValue({ ...mockUser, passwordHash: hash });
 
     const result = await authService.login({
       email: 'alice@example.com',
-      password: 'SecurePass1',
+      password: 'SecurePass1!',
     });
 
     expect(result).toHaveProperty('token');
@@ -133,17 +133,17 @@ describe('authService.login', () => {
     mockUserRepo.findByEmail.mockResolvedValue(null);
 
     await expect(
-      authService.login({ email: 'nobody@example.com', password: 'SecurePass1' }),
+      authService.login({ email: 'nobody@example.com', password: 'SecurePass1!' }),
     ).rejects.toMatchObject({ statusCode: 401, code: 'INVALID_CREDENTIALS' });
   });
 
   it('throws 401 when password is incorrect', async () => {
     const bcrypt = await import('bcrypt');
-    const hash = await bcrypt.hash('CorrectPass1', 1);
+    const hash = await bcrypt.hash('CorrectPass1!', 1);
     mockUserRepo.findByEmail.mockResolvedValue({ ...mockUser, passwordHash: hash });
 
     await expect(
-      authService.login({ email: 'alice@example.com', password: 'WrongPass1' }),
+      authService.login({ email: 'alice@example.com', password: 'WrongPass1!' }),
     ).rejects.toMatchObject({ statusCode: 401, code: 'INVALID_CREDENTIALS' });
   });
 
@@ -151,14 +151,14 @@ describe('authService.login', () => {
     // Both cases must throw AppError with the same code
     mockUserRepo.findByEmail.mockResolvedValue(null);
     const errorForMissingUser = await authService
-      .login({ email: 'nobody@example.com', password: 'AnyPass1' })
+      .login({ email: 'nobody@example.com', password: 'AnyPass1!' })
       .catch((e: AppError) => e);
 
     const bcrypt = await import('bcrypt');
-    const hash = await bcrypt.hash('CorrectPass1', 1);
+    const hash = await bcrypt.hash('CorrectPass1!', 1);
     mockUserRepo.findByEmail.mockResolvedValue({ ...mockUser, passwordHash: hash });
     const errorForWrongPassword = await authService
-      .login({ email: 'alice@example.com', password: 'WrongPass1' })
+      .login({ email: 'alice@example.com', password: 'WrongPass1!' })
       .catch((e: AppError) => e);
 
     expect((errorForMissingUser as AppError).code).toBe('INVALID_CREDENTIALS');
@@ -169,7 +169,7 @@ describe('authService.login', () => {
     mockUserRepo.findByEmail.mockResolvedValue(null);
 
     await authService
-      .login({ email: 'ALICE@EXAMPLE.COM', password: 'SecurePass1' })
+      .login({ email: 'ALICE@EXAMPLE.COM', password: 'SecurePass1!' })
       .catch(() => {}); // expected to fail — we only care about the call arg
 
     expect(mockUserRepo.findByEmail).toHaveBeenCalledWith('alice@example.com');

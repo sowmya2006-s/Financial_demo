@@ -77,4 +77,37 @@ export const authService = {
       user: { id: user.id, email: user.email, name: user.name },
     };
   },
+
+  /**
+   * Google login alternative.
+   * Auto-creates account on backend if it doesn't exist.
+   */
+  async googleLogin(input: { email: string; name: string }): Promise<AuthResponse> {
+    if (!isValidEmail(input.email)) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Invalid email address');
+    }
+
+    let user = await userRepository.findByEmail(input.email.toLowerCase());
+
+    if (!user) {
+      // Auto-create with secure random password hash
+      const randomPassword = require('crypto').randomBytes(16).toString('hex') + 'A!1a';
+      const passwordHash = await bcrypt.hash(randomPassword, env.bcryptSaltRounds);
+      user = await userRepository.create({
+        email: input.email.toLowerCase(),
+        name: input.name.trim(),
+        passwordHash,
+      });
+    }
+
+    const payload = { userId: user.id, email: user.email };
+    const token = jwt.sign(payload, env.jwtSecret, {
+      expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'],
+    });
+
+    return {
+      token,
+      user: { id: user.id, email: user.email, name: user.name },
+    };
+  },
 };

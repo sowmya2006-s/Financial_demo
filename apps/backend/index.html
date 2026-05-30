@@ -1,225 +1,1268 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moolah Minds | Functional Portal</title>
-    <style>
-        body { font-family: monospace; background: #fff; color: #000; padding: 20px; line-height: 1.5; }
-        h1, h2 { border-bottom: 2px solid #000; padding-bottom: 5px; }
-        section { margin-bottom: 40px; padding: 20px; border: 1px solid #000; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #000; margin-bottom: 10px; font-family: inherit; }
-        button { background: #000; color: #fff; border: none; padding: 10px 20px; cursor: pointer; font-family: inherit; font-weight: bold; }
-        button:hover { background: #333; }
-        pre { background: #eee; padding: 15px; overflow-x: auto; border: 1px dashed #000; font-size: 12px; }
-        .status { margin-top: 10px; font-weight: bold; }
-        .profile-card { border: 1px solid #000; padding: 10px; margin-bottom: 10px; }
-        .delete-btn { background: #f00; color: #fff; padding: 5px 10px; font-size: 12px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moolah Minds Sandbox — Weeks 1-8 Dev Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-surface-accent: #334155;
+      --color-primary: #6366f1;
+      --color-primary-hover: #4f46e5;
+      --color-secondary: #06b6d4;
+      --color-success: #10b981;
+      --color-danger: #ef4444;
+      --color-warning: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-shadow: rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-base);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-surface-accent);
+      border-radius: 4px;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #1e293b 100%);
+      padding: 24px;
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 32px var(--glass-shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-logo h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(to right, #818cf8, #22d3ee);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .header-logo p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .health-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .health-badge:hover {
+      background-color: var(--bg-surface-accent);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--color-warning);
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .metric-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background-color: var(--color-primary);
+    }
+
+    .metric-card.balance::before { background-color: var(--color-success); }
+    .metric-card.networth::before { background-color: var(--color-secondary); }
+    .metric-card.week::before { background-color: var(--color-warning); }
+
+    .metric-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .metric-value {
+      font-size: 20px;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .metric-status {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Main Section Layout */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr 400px;
+      gap: 24px;
+    }
+
+    @media(max-width: 1200px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Common Card Styles */
+    .card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 4px 20px var(--glass-shadow);
+    }
+
+    .card h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--bg-surface-accent);
+      padding-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card h2 span {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    /* Form Elements */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    input, select, textarea {
+      background-color: var(--bg-surface-accent);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    button {
+      background-color: var(--color-primary);
+      color: var(--text-main);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: var(--color-primary-hover);
+    }
+
+    button.secondary {
+      background-color: transparent;
+      border: 1px solid var(--bg-surface-accent);
+    }
+
+    button.secondary:hover {
+      background-color: var(--bg-surface-accent);
+    }
+
+    button.danger {
+      background-color: var(--color-danger);
+    }
+
+    button.danger:hover {
+      background-color: #dc2626;
+    }
+
+    button.success {
+      background-color: var(--color-success);
+    }
+
+    button.success:hover {
+      background-color: #059669;
+    }
+
+    /* Token / Auth indicator */
+    .token-box {
+      padding: 12px;
+      background-color: var(--bg-base);
+      border-radius: 8px;
+      font-size: 11px;
+      word-break: break-all;
+      color: var(--text-muted);
+      border: 1px dashed var(--glass-border);
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    /* Logs & Outputs */
+    .response-logger {
+      background-color: var(--bg-base);
+      color: #38bdf8;
+      font-family: monospace;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid var(--glass-border);
+    }
+
+    /* Simulation Ledger logs */
+    .ledger-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .ledger-item {
+      padding: 12px;
+      border-radius: 8px;
+      background-color: var(--bg-surface-accent);
+      border-left: 3px solid var(--color-primary);
+      font-size: 13px;
+    }
+
+    .ledger-item.salary { border-left-color: var(--color-success); }
+    .ledger-item.bill { border-left-color: var(--color-danger); }
+    .ledger-item.event { border-left-color: var(--color-warning); }
+    .ledger-item.investment { border-left-color: var(--color-secondary); }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      text-align: left;
+      padding: 8px;
+      color: var(--text-muted);
+      border-bottom: 2px solid var(--bg-surface-accent);
+    }
+
+    td {
+      padding: 8px;
+      border-bottom: 1px solid var(--bg-surface-accent);
+    }
+
+    /* Investment Product List */
+    .product-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .product-row {
+      padding: 12px;
+      background-color: var(--bg-surface-accent);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .product-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .product-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .product-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .product-badge.low { background-color: var(--color-success); color: var(--bg-base); }
+    .product-badge.medium { background-color: var(--color-warning); color: var(--bg-base); }
+    .product-badge.high { background-color: var(--color-danger); color: var(--text-main); }
+
+    .decision-row-item {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .decision-row-item select, .decision-row-item input {
+      flex: 1;
+      padding: 6px;
+      font-size: 12px;
+    }
+
+    /* Weekly Bills Panel */
+    .bills-panel {
+      display: none;
+    }
+    .bills-panel.visible {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .bill-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: var(--bg-base);
+      border: 1px solid var(--glass-border);
+      border-left: 3px solid var(--color-success);
+      font-size: 13px;
+    }
+    .bill-row.missed {
+      border-left-color: var(--color-danger);
+      background: rgba(239,68,68,0.05);
+    }
+    .bill-icon { font-size: 18px; margin-right: 10px; }
+    .bill-name { font-weight: 500; flex: 1; }
+    .bill-cat { font-size: 11px; color: var(--text-muted); }
+    .bill-amount { font-weight: 700; margin-right: 12px; }
+    .bill-status {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+    .bill-status.paid { background: var(--color-success); color: #0f172a; }
+    .bill-status.missed { background: var(--color-danger); color: #fff; }
+    .bills-totals {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .bills-total-box {
+      flex: 1;
+      min-width: 100px;
+      background: var(--bg-base);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .bills-total-box .bt-label { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
+    .bills-total-box .bt-val { font-size: 17px; font-weight: 700; }
+    .bill-alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: flex;
+      gap: 8px;
+    }
+    .bill-alert.warn { background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.3); color: var(--color-warning); }
+    .bill-alert.ok   { background: rgba(16,185,129,.10); border: 1px solid rgba(16,185,129,.3); color: var(--color-success); }
+    .bill-alert.bad  { background: rgba(239,68,68,.10);  border: 1px solid rgba(239,68,68,.3);  color: var(--color-danger); }
+  </style>
 </head>
 <body>
-    <h1>MOOLAH MINDS | FUNCTIONAL PORTAL</h1>
-    <p>Simplified interface for backend verification (Week 1-3).</p>
+  <div class="container">
+    <header>
+      <div class="header-logo">
+        <h1>MOOLAH MINDS</h1>
+        <p>Weeks 1–8 Production-Grade Backend Administrative Console</p>
+      </div>
+      <div class="health-badge" id="healthCheck">
+        <div class="status-dot" id="healthDot"></div>
+        <span id="healthText">Verifying status...</span>
+      </div>
+    </header>
 
-    <div class="grid">
-        <!-- AUTH SECTION -->
-        <section>
-            <h2>1. AUTHENTICATION</h2>
-            <div id="authForms">
-                <div>
-                    <h3>Register</h3>
-                    <label>Name</label>
-                    <input type="text" id="regName" placeholder="Full Name">
-                    <label>Email</label>
-                    <input type="email" id="regEmail" placeholder="email@example.com">
-                    <label>Password (8+ chars, 1 Upper, 1 Num)</label>
-                    <input type="password" id="regPass" placeholder="••••••••">
-                    <button onclick="handleRegister()">REGISTER</button>
-                </div>
-                <hr>
-                <div>
-                    <h3>Login</h3>
-                    <label>Email</label>
-                    <input type="email" id="loginEmail" placeholder="email@example.com">
-                    <label>Password</label>
-                    <input type="password" id="loginPass" placeholder="••••••••">
-                    <button onclick="handleLogin()">LOGIN</button>
-                </div>
-            </div>
-            <div id="authStatus" class="status">Not logged in.</div>
-            <button id="logoutBtn" style="display:none;" onclick="handleLogout()">LOGOUT</button>
-        </section>
-
-        <!-- DATA LOG -->
-        <section>
-            <h2>2. SYSTEM RESPONSE (JSON)</h2>
-            <pre id="jsonOutput">Waiting for action...</pre>
-        </section>
+    <!-- METRICS MONITOR BAR -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <span class="metric-label">Credit Score</span>
+        <span class="metric-value" id="dispCreditScore">700</span>
+        <span class="metric-status">Min: 300 | Max: 900</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Well-Being</span>
+        <span class="metric-value" id="dispWellBeing">75%</span>
+        <span class="metric-status">Natural Decay active</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Social standing</span>
+        <span class="metric-value" id="dispSocialScore">50%</span>
+        <span class="metric-status">Decays if no purchases</span>
+      </div>
+      <div class="metric-card balance">
+        <span class="metric-label">Liquid Balance</span>
+        <span class="metric-value" id="dispBalance">₹0.00</span>
+        <span class="metric-status">Derived from ledger SUM</span>
+      </div>
+      <div class="metric-card networth">
+        <span class="metric-label">Net Worth</span>
+        <span class="metric-value" id="dispNetWorth">₹0.00</span>
+        <span class="metric-status">Cash + Assets</span>
+      </div>
+      <div class="metric-card week">
+        <span class="metric-label">Simulation Week</span>
+        <span class="metric-value" id="dispWeek">1 / 480</span>
+        <span class="metric-status">Ticks to retire</span>
+      </div>
     </div>
 
-    <!-- PROFILE MANAGEMENT -->
-    <section id="profileSection" style="display:none;">
-        <h2>3. PROFILE MANAGEMENT</h2>
-        <div class="grid">
-            <div>
-                <h3>Create New Profile</h3>
-                <label>Profile Name</label>
-                <input type="text" id="profName" placeholder="e.g. My Career">
-                <label>Difficulty</label>
-                <select id="profDiff">
-                    <option value="BEGINNER">BEGINNER</option>
-                    <option value="STANDARD">STANDARD</option>
-                    <option value="HARD">HARD</option>
-                </select>
-                <button onclick="handleCreateProfile()">CREATE PROFILE</button>
-            </div>
-            <div>
-                <h3>Your Profiles</h3>
-                <button onclick="loadProfiles()">REFRESH LIST</button>
-                <div id="profileList" style="margin-top:20px;"></div>
-            </div>
+    <!-- MAIN INTERACTIVE SECTION -->
+    <div class="dashboard-layout">
+      
+      <!-- LEFT COLUMN: ACCESS AND PROFILE CONTROL -->
+      <div class="card">
+        <h2>Authentication <span>Register / Login</span></h2>
+        <div class="form-group">
+          <label for="authEmail">Email</label>
+          <input type="email" id="authEmail" value="intern@moolahminds.com">
         </div>
-    </section>
+        <div class="form-group">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" value="SecureP@ss123">
+        </div>
+        <div class="form-group" id="authRegNameGroup">
+          <label for="authName">Full Name (Only for Register)</label>
+          <input type="text" id="authName" value="Moolah Admin">
+        </div>
+        
+        <div style="display: flex; gap: 8px;">
+          <button style="flex: 1;" class="secondary" id="btnRegister">Register</button>
+          <button style="flex: 1;" id="btnLogin">Log In</button>
+        </div>
 
-    <!-- DETAILED VIEW -->
-    <section id="detailSection" style="display:none;">
-        <h2>4. DETAILED STATE (METRICS & COHORT)</h2>
-        <div id="detailView"></div>
-    </section>
+        <div class="token-box" id="tokenDisplay">No JWT token generated yet. Please log in or register.</div>
 
-    <script>
-        const API = 'http://localhost:3000';
-        let TOKEN = localStorage.getItem('moolah_token');
+        <h2>Character Profile <span>Week-based Cohorts</span></h2>
+        <div class="form-group">
+          <label for="profName">Profile Name</label>
+          <input type="text" id="profName" value="Simulator Pioneer">
+        </div>
+        <div class="form-group">
+          <label for="profDifficulty">Difficulty Tier</label>
+          <select id="profDifficulty">
+            <option value="BEGINNER">BEGINNER (0.5x Random Event Risk)</option>
+            <option value="STANDARD" selected>STANDARD (1.0x Base Risk)</option>
+            <option value="HARD">HARD (2.0x Double Event Risk)</option>
+          </select>
+        </div>
+        <button id="btnCreateProfile" class="success">Create Profile Character</button>
 
-        function updateUI() {
-            if (TOKEN) {
-                document.getElementById('authForms').style.display = 'none';
-                document.getElementById('logoutBtn').style.display = 'block';
-                document.getElementById('profileSection').style.display = 'block';
-                document.getElementById('authStatus').textContent = 'Logged in.';
-                loadProfiles();
-            } else {
-                document.getElementById('authForms').style.display = 'block';
-                document.getElementById('logoutBtn').style.display = 'none';
-                document.getElementById('profileSection').style.display = 'none';
-                document.getElementById('detailSection').style.display = 'none';
-                document.getElementById('authStatus').textContent = 'Not logged in.';
+        <div class="form-group">
+          <label for="profileSelect">Active Character Select</label>
+          <select id="profileSelect"><option value="">No Active Profile</option></select>
+        </div>
+        <button id="btnRefreshProfiles" class="secondary">Load Characters</button>
+      </div>
+
+      <!-- MIDDLE COLUMN: GAME TICK ENGINE AND LEDGER LOGGER -->
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        <div class="card">
+          <h2>Weekly Decisions Board <span>Queue weekly actions</span></h2>
+          <div id="decisionsQueue">
+            <div class="decision-row-item">
+              <select class="decType">
+                <option value="SKIP">Skip Action</option>
+                <option value="PURCHASE">Make Purchase</option>
+                <option value="INVESTMENT">Investment Holding</option>
+              </select>
+              <select class="decCat">
+                <option value="none">None</option>
+                <option value="self_invest">Self-Investment (+5 Well-Being)</option>
+                <option value="luxury">Luxury (+8 Social Score)</option>
+                <option value="standard">Standard Needs</option>
+              </select>
+              <input type="number" class="decAmount" placeholder="Amount in ₹" value="0">
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="secondary" id="btnAddDecision">Add Action</button>
+            <button class="success" id="btnSubmitDecisions" style="flex: 1;">Submit Decisions to Simulator Queue</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Time advancement Engine <span>Trigger atomic tick</span></h2>
+          <p style="font-size: 13px; color: var(--text-muted);">
+            Advancing the week deducts bills/obligations, credits your weekly salary, executes your queued spending/investing decisions, triggers random events, and runs causal calculations.
+          </p>
+          <button id="btnAdvanceWeek" class="success" style="font-size: 16px; padding: 14px 20px;">
+            ⚡ ADVANCE WEEK SIMULATION TICK
+          </button>
+        </div>
+
+        <div class="card">
+          <h2>Simulation Ledger Feed <span>Causal summaries and updates</span></h2>
+          <div class="ledger-feed" id="ledgerLogs">
+            <div class="ledger-item">No simulation logs recorded yet. Advance a week to start.</div>
+          </div>
+        </div>
+
+        <!-- WEEKLY BILLS BREAKDOWN (always visible) -->
+        <div class="card" id="billsCard">
+          <h2>📋 Weekly Bill Breakdown <span id="billsWeekLabel">Select a profile to load bills</span></h2>
+          <div id="billsAlerts"></div>
+          <div class="bills-totals" id="billsTotals"></div>
+          <div id="billsList" class="bills-panel visible">
+            <div style="text-align:center; padding: 24px; color: var(--text-muted); font-size:13px;">
+              🏦 Select or load a character profile to see the weekly bill breakdown here.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: FINANCIAL SERVICES AND PORTFOLIO -->
+      <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- INVESTMENT PRODUCTS -->
+        <div class="card">
+          <h2>Investment Center <span>Active catalogs</span></h2>
+          <div class="product-list" id="productsDisplay">
+            <!-- Loaded dynamically -->
+          </div>
+          <div style="border-top: 1px solid var(--bg-surface-accent); padding-top: 12px;">
+            <h3 style="font-size: 14px; margin-bottom: 8px;">Direct Buy Action</h3>
+            <div class="form-group" style="margin-bottom: 8px;">
+              <select id="investProductCode"></select>
+            </div>
+            <div class="form-group" style="margin-bottom: 8px;">
+              <input type="number" id="investAmount" placeholder="Amount in ₹ (e.g. 5000)" value="5000">
+            </div>
+            <button id="btnBuyInvestment" style="width: 100%;">Buy Investment Security</button>
+          </div>
+        </div>
+
+        <!-- PORTFOLIO / DEBTS -->
+        <div class="card">
+          <h2>Asset Portfolio <span>Securities</span></h2>
+          <div style="max-height: 200px; overflow-y: auto;">
+            <table id="investmentsTable">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Principal</th>
+                  <th>Current Value</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No active assets</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>Obligations <span>Bills</span></h2>
+          <div style="max-height: 200px; overflow-y: auto;">
+            <table id="obligationsTable">
+              <thead>
+                <tr>
+                  <th>Obligation Label</th>
+                  <th>Category</th>
+                  <th>Weekly Charge</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No obligations</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- LEADERBOARD / COHORT -->
+        <div class="card">
+          <h2>Cohort Standings <span>Leaderboard</span></h2>
+          <button id="btnRefreshLeaderboard" class="secondary" style="width: 100%;">Fetch Leaderboard</button>
+          <div style="max-height: 250px; overflow-y: auto; margin-top: 10px;">
+            <table id="leaderboardTable">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Player</th>
+                  <th>Net Worth</th>
+                  <th>Week</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Leaderboard not loaded</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RAW API MONITOR -->
+    <div class="card">
+      <h2>Raw HTTP API Traffic Monitor</h2>
+      <pre class="response-logger" id="rawLogger">No REST API request made in this sandbox session.</pre>
+    </div>
+  </div>
+
+  <script>
+    const apiBase = window.location.origin.includes('localhost') ? window.location.origin : 'http://localhost:3005';
+    let token = '';
+    let activeProfileId = '';
+    let cohortId = '';
+
+    // Core DOM queries
+    const logRaw = (url, method, status, body) => {
+      const logger = document.getElementById('rawLogger');
+      logger.textContent = `[HTTP RESPONSE] ${method} ${url} - STATUS ${status}\n${JSON.stringify(body, null, 2)}`;
+      logger.scrollTop = logger.scrollHeight;
+    };
+
+    const updateAuthHeaders = () => {
+      return token 
+        ? { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+        : { 'Content-Type': 'application/json' };
+    };
+
+    // Health checker
+    const checkHealth = async () => {
+      try {
+        const res = await fetch(`${apiBase}/health`);
+        const data = await res.json();
+        if (data.status === 'ok') {
+          document.getElementById('healthDot').style.backgroundColor = 'var(--color-success)';
+          document.getElementById('healthText').textContent = 'Server Online';
+        } else {
+          document.getElementById('healthDot').style.backgroundColor = 'var(--color-warning)';
+          document.getElementById('healthText').textContent = 'Database Degraded';
+        }
+      } catch (err) {
+        document.getElementById('healthDot').style.backgroundColor = 'var(--color-danger)';
+        document.getElementById('healthText').textContent = 'Server Offline';
+      }
+    };
+
+    document.getElementById('healthCheck').addEventListener('click', checkHealth);
+    setInterval(checkHealth, 15000);
+    checkHealth();
+
+    // Register action
+    document.getElementById('btnRegister').addEventListener('click', async () => {
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      const name = document.getElementById('authName').value;
+
+      try {
+        const res = await fetch(`${apiBase}/auth/register`, {
+          method: 'POST',
+          headers: updateAuthHeaders(),
+          body: JSON.stringify({ email, password, name })
+        });
+        const data = await res.json();
+        logRaw('/auth/register', 'POST', res.status, data);
+        if (res.ok) {
+          alert('User Registration Successful! Please log in now.');
+        } else {
+          alert('Registration Failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Connection error');
+      }
+    });
+
+    // Login action
+    document.getElementById('btnLogin').addEventListener('click', async () => {
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+
+      try {
+        const res = await fetch(`${apiBase}/auth/login`, {
+          method: 'POST',
+          headers: updateAuthHeaders(),
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        logRaw('/auth/login', 'POST', res.status, data);
+        if (res.ok && data.token) {
+          token = data.token;
+          document.getElementById('tokenDisplay').textContent = `Authenticated User ID: ${data.user.id}\nJWT: ${token}`;
+          await loadProfilesList();
+        } else {
+          alert('Login Failed: ' + (data.error || 'Invalid credentials'));
+        }
+      } catch (err) {
+        alert('Connection error');
+      }
+    });
+
+    // Create profile action
+    document.getElementById('btnCreateProfile').addEventListener('click', async () => {
+      if (!token) { return alert('Please login first.'); }
+      const name = document.getElementById('profName').value;
+      const difficulty = document.getElementById('profDifficulty').value;
+
+      try {
+        const res = await fetch(`${apiBase}/profiles`, {
+          method: 'POST',
+          headers: updateAuthHeaders(),
+          body: JSON.stringify({ name, difficulty })
+        });
+        const data = await res.json();
+        logRaw('/profiles', 'POST', res.status, data);
+        if (res.ok) {
+          alert('Profile Character Created Successfully!');
+          await loadProfilesList();
+        } else {
+          alert('Creation Failed: ' + (data.error || 'Limit reached or invalid name'));
+        }
+      } catch (err) {
+        alert('Connection error');
+      }
+    });
+
+    // Refresh and populate profiles list
+    const loadProfilesList = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch(`${apiBase}/profiles`, {
+          method: 'GET',
+          headers: updateAuthHeaders()
+        });
+        const data = await res.json();
+        logRaw('/profiles', 'GET', res.status, data);
+
+        const select = document.getElementById('profileSelect');
+        select.innerHTML = '<option value="">-- Choose Character --</option>';
+        if (data.profiles && data.profiles.length > 0) {
+          data.profiles.forEach(p => {
+            select.innerHTML += `<option value="${p.id}">${p.name} (${p.difficulty})</option>`;
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    document.getElementById('btnRefreshProfiles').addEventListener('click', loadProfilesList);
+
+    // Profile select change triggers loading complete stats & portfolio
+    document.getElementById('profileSelect').addEventListener('change', async (e) => {
+      activeProfileId = e.target.value;
+      if (!activeProfileId) return resetDashboardUI();
+      await fetchGameStatus();
+      await fetchPortfolio();
+    });
+
+    const resetDashboardUI = () => {
+      document.getElementById('dispCreditScore').textContent = '---';
+      document.getElementById('dispWellBeing').textContent = '---';
+      document.getElementById('dispSocialScore').textContent = '---';
+      document.getElementById('dispBalance').textContent = '₹0.00';
+      document.getElementById('dispNetWorth').textContent = '₹0.00';
+      document.getElementById('dispWeek').textContent = '---';
+      document.getElementById('ledgerLogs').innerHTML = '<div class="ledger-item">No profile loaded. Select or create a profile.</div>';
+    };
+
+    // Load static investment products list
+    const loadInvestmentProducts = async () => {
+      try {
+        const res = await fetch(`${apiBase}/finance/products`);
+        const data = await res.json();
+        const display = document.getElementById('productsDisplay');
+        display.innerHTML = '';
+        
+        const buySelect = document.getElementById('investProductCode');
+        buySelect.innerHTML = '';
+
+        if (data.products) {
+          data.products.forEach(p => {
+            buySelect.innerHTML += `<option value="${p.productCode}">${p.name}</option>`;
+            display.innerHTML += `
+              <div class="product-row">
+                <div class="product-header">
+                  <span class="product-name">${p.name}</span>
+                  <span class="product-badge ${p.risk.toLowerCase()}">${p.risk} RISK</span>
+                </div>
+                <div style="font-size:12px; color:var(--text-muted);">${p.description}</div>
+                <div style="font-size:12px; font-weight:600; color:var(--color-secondary);">Expected Return: ${p.expectedReturn}</div>
+              </div>
+            `;
+          });
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    loadInvestmentProducts();
+
+    // Fetch live game state + bills from dashboard
+    const fetchGameStatus = async () => {
+      if (!activeProfileId) return;
+      try {
+        const res = await fetch(`${apiBase}/game/${activeProfileId}/state`, {
+          method: 'GET',
+          headers: updateAuthHeaders()
+        });
+        const data = await res.json();
+        logRaw(`/game/${activeProfileId}/state`, 'GET', res.status, data);
+
+        if (res.ok) {
+          document.getElementById('dispCreditScore').textContent = data.gameState.creditScore;
+          document.getElementById('dispWellBeing').textContent = data.gameState.wellBeing + '%';
+          document.getElementById('dispSocialScore').textContent = data.gameState.socialScore + '%';
+          document.getElementById('dispBalance').textContent = '₹' + (data.balance / 100).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+          document.getElementById('dispNetWorth').textContent = '₹' + (data.netWorth / 100).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+          document.getElementById('dispWeek').textContent = `${data.gameState.currentWeek} / 480`;
+          
+          cohortId = data.profile.cohortId;
+
+          // Check for Game status banner
+          if (data.gameState.status !== 'ACTIVE') {
+            alert(`Simulation Finished! Resulting Status: ${data.gameState.status}`);
+          }
+
+          // Load bills from dashboard (lastWeekBills)
+          try {
+            const dashRes = await fetch(`${apiBase}/api/dashboard/${activeProfileId}`, {
+              headers: updateAuthHeaders()
+            });
+            const dashData = await dashRes.json();
+            if (dashData.lastWeekBills && dashData.lastWeekBills.breakdown && dashData.lastWeekBills.breakdown.length > 0) {
+              const lb = dashData.lastWeekBills;
+              // Convert INR back to paise for renderBillsPanel
+              renderBillsPanel(
+                lb.breakdown.map(b => ({ ...b, amount: b.amount * 100, paidStatus: b.paidStatus })),
+                lb.totalBills * 100,
+                lb.totalPaid * 100,
+                lb.week,
+                false, false, 0
+              );
+            } else if (data.gameState.currentWeek === 1) {
+              document.getElementById('billsWeekLabel').textContent = 'Week 1 — advance to see bills';
+              document.getElementById('billsAlerts').innerHTML = '';
+              document.getElementById('billsTotals').innerHTML = '';
+              document.getElementById('billsList').innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">⏭️ Click ADVANCE WEEK to generate and see this week\'s bills.</div>';
             }
+          } catch(e) { /* dashboard optional */ }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    // Fetch active investments and obligations
+    const fetchPortfolio = async () => {
+      if (!activeProfileId) return;
+      try {
+        const res = await fetch(`${apiBase}/finance/${activeProfileId}/portfolio`, {
+          headers: updateAuthHeaders()
+        });
+        const data = await res.json();
+        logRaw(`/finance/${activeProfileId}/portfolio`, 'GET', res.status, data);
+
+        // Populate obligations
+        const obTableBody = document.querySelector('#obligationsTable tbody');
+        obTableBody.innerHTML = '';
+        if (data.obligations && data.obligations.length > 0) {
+          data.obligations.forEach(o => {
+            obTableBody.innerHTML += `
+              <tr>
+                <td>${o.label}</td>
+                <td>${o.category}</td>
+                <td style="color:var(--color-danger); font-weight:600;">₹${(o.amount / 100).toLocaleString()}</td>
+              </tr>
+            `;
+          });
+        } else {
+          obTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">No current bills</td></tr>';
         }
 
-        async function apiCall(path, method = 'GET', body = null) {
-            const options = {
-                method,
-                headers: { 'Content-Type': 'application/json' }
-            };
-            if (TOKEN) options.headers['Authorization'] = `Bearer ${TOKEN}`;
-            if (body) options.body = JSON.stringify(body);
+        // Populate investments
+        const invTableBody = document.querySelector('#investmentsTable tbody');
+        invTableBody.innerHTML = '';
+        if (data.investments && data.investments.length > 0) {
+          data.investments.forEach(i => {
+            const actionBtn = i.isActive 
+              ? `<button class="danger" style="padding: 4px 8px; font-size:11px;" onclick="redeemAsset('${i.id}')">Redeem</button>`
+              : `<span style="color: var(--text-muted); font-size:11px;">Redeemed</span>`;
 
-            try {
-                const res = await fetch(`${API}${path}`, options);
-                const data = await res.json();
-                document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
-                if (!res.ok) throw new Error(data.error || 'API Error');
-                return data;
-            } catch (err) {
-                alert(err.message);
-                if (err.message.includes('token')) handleLogout();
-                return null;
-            }
+            invTableBody.innerHTML += `
+              <tr>
+                <td>${i.productCode}</td>
+                <td>₹${(i.principalAmount / 100).toLocaleString()}</td>
+                <td style="color:var(--color-success); font-weight:600;">₹${(i.currentValue / 100).toLocaleString()}</td>
+                <td>${actionBtn}</td>
+              </tr>
+            `;
+          });
+        } else {
+          invTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No assets in portfolio</td></tr>';
         }
 
-        async function handleRegister() {
-            const name = document.getElementById('regName').value;
-            const email = document.getElementById('regEmail').value;
-            const password = document.getElementById('regPass').value;
-            const data = await apiCall('/auth/register', 'POST', { name, email, password });
-            if (data) alert('Registration successful! Please login.');
-        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-        async function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPass').value;
-            const data = await apiCall('/auth/login', 'POST', { email, password });
-            if (data && data.token) {
-                TOKEN = data.token;
-                localStorage.setItem('moolah_token', TOKEN);
-                updateUI();
-            }
-        }
+    // Buy Direct Investment Security
+    document.getElementById('btnBuyInvestment').addEventListener('click', async () => {
+      if (!activeProfileId) return alert('Select active character profile first.');
+      const productCode = document.getElementById('investProductCode').value;
+      const amount = parseFloat(document.getElementById('investAmount').value);
 
-        function handleLogout() {
-            TOKEN = null;
-            localStorage.removeItem('moolah_token');
-            updateUI();
-        }
+      if (isNaN(amount) || amount <= 0) return alert('Enter a valid positive amount.');
 
-        async function handleCreateProfile() {
-            const name = document.getElementById('profName').value;
-            const difficulty = document.getElementById('profDiff').value;
-            const data = await apiCall('/profiles', 'POST', { name, difficulty });
-            if (data) loadProfiles();
-        }
+      try {
+        const res = await fetch(`${apiBase}/finance/${activeProfileId}/invest`, {
+          method: 'POST',
+          headers: updateAuthHeaders(),
+          body: JSON.stringify({ productCode, amount: amount * 100 }) // Convert to paise
+        });
+        const data = await res.json();
+        logRaw(`/finance/${activeProfileId}/invest`, 'POST', res.status, data);
 
-        async function loadProfiles() {
-            const data = await apiCall('/profiles');
-            const list = document.getElementById('profileList');
-            list.innerHTML = '';
-            if (data && data.profiles) {
-                data.profiles.forEach(p => {
-                    const div = document.createElement('div');
-                    div.className = 'profile-card';
-                    div.innerHTML = `
-                        <strong>${p.name}</strong> (${p.difficulty})<br>
-                        <small>ID: ${p.id}</small><br>
-                        <button onclick="viewProfile('${p.id}')">VIEW DETAILS</button>
-                        <button class="delete-btn" onclick="deleteProfile('${p.id}')">DELETE</button>
-                    `;
-                    list.appendChild(div);
-                });
-            }
+        if (res.ok) {
+          alert('Asset purchased successfully!');
+          await fetchGameStatus();
+          await fetchPortfolio();
+        } else {
+          alert('Failed to purchase: ' + (data.error || 'Insufficient funds'));
         }
+      } catch (err) {
+        alert('Network/Server connection error');
+      }
+    });
 
-        async function viewProfile(id) {
-            const data = await apiCall(`/profiles/${id}`);
-            if (data && data.profile) {
-                const p = data.profile;
-                document.getElementById('detailSection').style.display = 'block';
-                document.getElementById('detailView').innerHTML = `
-                    <h3>Profile: ${p.name}</h3>
-                    <div class="grid">
-                        <div>
-                            <h4>METRICS (Game State)</h4>
-                            <ul>
-                                <li>Salary: ${p.gameState.salary / 100} units</li>
-                                <li>Credit Score: ${p.gameState.creditScore}</li>
-                                <li>Social Score: ${p.gameState.socialScore}</li>
-                                <li>Well-being: ${p.gameState.wellBeing}</li>
-                                <li>Status: ${p.gameState.status}</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4>TRACKING (Cohort)</h4>
-                            <ul>
-                                <li>Cohort ID: ${p.cohortId}</li>
-                                <li>Week Key: ${p.cohort.weekKey}</li>
-                                <li>Started At: ${new Date(p.cohort.startedAt).toLocaleDateString()}</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-                document.getElementById('detailSection').scrollIntoView();
-            }
+    // Redeem Security function called dynamically
+    window.redeemAsset = async (investmentId) => {
+      if (!activeProfileId) return;
+      try {
+        const res = await fetch(`${apiBase}/finance/${activeProfileId}/redeem`, {
+          method: 'POST',
+          headers: updateAuthHeaders(),
+          body: JSON.stringify({ investmentId })
+        });
+        const data = await res.json();
+        logRaw(`/finance/${activeProfileId}/redeem`, 'POST', res.status, data);
+
+        if (res.ok) {
+          alert(`Security liquidated! Credited ₹${(data.redemptionValue / 100).toLocaleString()}`);
+          await fetchGameStatus();
+          await fetchPortfolio();
+        } else {
+          alert('Liquidation failed: ' + (data.error || 'Inactive investment'));
         }
+      } catch (err) {
+        alert('Network/Server error');
+      }
+    };
 
-        async function deleteProfile(id) {
-            if (!confirm('Are you sure?')) return;
-            const data = await apiCall(`/profiles/${id}`, 'DELETE');
-            if (data) loadProfiles();
+    // Queue / submit decisions panel
+    document.getElementById('btnAddDecision').addEventListener('click', () => {
+      const container = document.getElementById('decisionsQueue');
+      const div = document.createElement('div');
+      div.className = 'decision-row-item';
+      div.innerHTML = `
+        <select class="decType">
+          <option value="SKIP">Skip Action</option>
+          <option value="PURCHASE">Make Purchase</option>
+          <option value="INVESTMENT">Investment Holding</option>
+        </select>
+        <select class="decCat">
+          <option value="none">None</option>
+          <option value="self_invest">Self-Investment (+5 Well-Being)</option>
+          <option value="luxury">Luxury (+8 Social Score)</option>
+          <option value="standard">Standard Needs</option>
+        </select>
+        <input type="number" class="decAmount" placeholder="Amount in ₹" value="0">
+      `;
+      container.appendChild(div);
+    });
+
+    document.getElementById('btnSubmitDecisions').addEventListener('click', async () => {
+      if (!activeProfileId) return alert('Select active character profile first.');
+      const rows = document.querySelectorAll('#decisionsQueue .decision-row-item');
+      const decisions = [];
+
+      rows.forEach(row => {
+        const type = row.querySelector('.decType').value;
+        const category = row.querySelector('.decCat').value;
+        const amountVal = parseFloat(row.querySelector('.decAmount').value || 0);
+
+        if (type !== 'SKIP') {
+          decisions.push({
+            type,
+            category,
+            amount: amountVal * 100, // paise converter
+            metadata: category === 'none' ? undefined : category
+          });
         }
+      });
 
-        updateUI();
-    </script>
+      try {
+        const res = await fetch(`${apiBase}/game/${activeProfileId}/decisions`, {
+          method: 'POST',
+          headers: updateAuthHeaders(),
+          body: JSON.stringify({ decisions })
+        });
+        const data = await res.json();
+        logRaw(`/game/${activeProfileId}/decisions`, 'POST', res.status, data);
+
+        if (res.ok) {
+          alert('Weekly Decisions recorded successfully into the pending Queue.');
+        } else {
+          alert('Submission failed: ' + (data.error || 'Server error'));
+        }
+      } catch (err) {
+        alert('Network error');
+      }
+    });
+
+    // ── Shared bill rendering helper ──────────────────────────────────────
+    const iconMap = {tax:'💰',food:'🛒',transport:'🚌',mobile:'📱',rent:'🏠',utilities:'⚡',emi:'🏦'};
+
+    function renderBillsPanel(billBreakdown, billsTotal, billsPaid, weekNum, stressTriggered, allMissed, creditScoreDelta) {
+      if (!billBreakdown || billBreakdown.length === 0) return;
+
+      document.getElementById('billsWeekLabel').textContent = `Week ${weekNum}`;
+
+      const missedCount = billBreakdown.filter(b => b.paidStatus === 'MISSED').length;
+
+      // Alerts
+      let alertsHtml = '';
+      if (missedCount === 0) {
+        alertsHtml = `<div class="bill-alert ok">✅ All ${billBreakdown.length} bills paid on time! Credit score +${creditScoreDelta || 10}.</div>`;
+      } else {
+        alertsHtml = `<div class="bill-alert bad">⚠️ ${missedCount} bill(s) MISSED. Credit score penalised.</div>`;
+      }
+      if (stressTriggered) {
+        alertsHtml += `<div class="bill-alert warn">😰 Financial stress — bills exceeded 60% of salary. Well-being -10.</div>`;
+      }
+      document.getElementById('billsAlerts').innerHTML = alertsHtml;
+
+      // Totals
+      const unpaid = billsTotal - billsPaid;
+      document.getElementById('billsTotals').innerHTML = `
+        <div class="bills-total-box">
+          <div class="bt-label">Total Bills</div>
+          <div class="bt-val" style="color:var(--color-danger)">₹${Math.round(billsTotal/100).toLocaleString('en-IN')}</div>
+        </div>
+        <div class="bills-total-box">
+          <div class="bt-label">Paid</div>
+          <div class="bt-val" style="color:var(--color-success)">₹${Math.round(billsPaid/100).toLocaleString('en-IN')}</div>
+        </div>
+        <div class="bills-total-box">
+          <div class="bt-label">Unpaid</div>
+          <div class="bt-val" style="color:var(--color-warning)">₹${Math.round(unpaid/100).toLocaleString('en-IN')}</div>
+        </div>
+        <div class="bills-total-box">
+          <div class="bt-label">Bills Count</div>
+          <div class="bt-val" style="color:var(--color-secondary)">${billBreakdown.length}</div>
+        </div>
+      `;
+
+      // Bill rows
+      document.getElementById('billsList').innerHTML = billBreakdown.map(b => {
+        const icon = iconMap[b.category] || '📄';
+        const cls  = b.paidStatus === 'PAID' ? '' : 'missed';
+        return `
+          <div class="bill-row ${cls}">
+            <span class="bill-icon">${icon}</span>
+            <div style="flex:1">
+              <div class="bill-name">${b.billName}</div>
+              <div class="bill-cat">${(b.category||'').toUpperCase()}</div>
+            </div>
+            <span class="bill-amount">₹${Math.round(b.amount/100).toLocaleString('en-IN')}</span>
+            <span class="bill-status ${b.paidStatus.toLowerCase()}">${b.paidStatus}</span>
+          </div>`;
+      }).join('');
+
+      document.getElementById('billsCard').scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+
+    // Advance Week Tick Engine trigger
+    document.getElementById('btnAdvanceWeek').addEventListener('click', async () => {
+      if (!activeProfileId) return alert('Select active character profile first.');
+      try {
+        const res = await fetch(`${apiBase}/game/${activeProfileId}/advance-week`, {
+          method: 'POST',
+          headers: updateAuthHeaders()
+        });
+        const data = await res.json();
+        logRaw(`/game/${activeProfileId}/advance-week`, 'POST', res.status, data);
+
+        if (res.ok) {
+          const logsContainer = document.getElementById('ledgerLogs');
+          logsContainer.innerHTML = '';
+          
+          if (data.weeklySummary && data.weeklySummary.explanations) {
+            data.weeklySummary.explanations.forEach(log => {
+              let categoryClass = '';
+              if (log.toLowerCase().includes('salary')) categoryClass = 'salary';
+              else if (log.toLowerCase().includes('paid') || log.toLowerCase().includes('deduct')) categoryClass = 'bill';
+              else if (log.toLowerCase().includes('event') || log.toLowerCase().includes('triggered')) categoryClass = 'event';
+              else if (log.toLowerCase().includes('invested')) categoryClass = 'investment';
+
+              logsContainer.innerHTML += `
+                <div class="ledger-item ${categoryClass}">
+                  ${log}
+                </div>
+              `;
+            });
+          }
+
+          // ── Render Weekly Bills Panel ──────────────────────────────
+          const billBreakdown = data.billBreakdown || [];
+          const weekNum = data.gameWeek || data.weeklySummary?.gameWeek;
+          renderBillsPanel(
+            billBreakdown,
+            data.billsTotal || 0,
+            data.billsPaid  || 0,
+            weekNum,
+            data.stressTriggered || false,
+            false,
+            data.creditScoreDelta || 0
+          );
+          // ──────────────────────────────────────────────────────────
+
+          // Refresh dynamic stats
+          await fetchGameStatus();
+          await fetchPortfolio();
+        } else {
+          alert('Failed to advance week: ' + (data.error || 'Submit decisions first!'));
+        }
+      } catch (err) {
+        alert('Network error');
+      }
+    });
+
+    // Cohort Leaderboard Standings
+    document.getElementById('btnRefreshLeaderboard').addEventListener('click', async () => {
+      if (!cohortId) return alert('Load an active character profile to determine your Cohort week.');
+      try {
+        const res = await fetch(`${apiBase}/cohorts/${cohortId}/leaderboard`, {
+          headers: updateAuthHeaders()
+        });
+        const data = await res.json();
+        logRaw(`/cohorts/${cohortId}/leaderboard`, 'GET', res.status, data);
+
+        const tableBody = document.querySelector('#leaderboardTable tbody');
+        tableBody.innerHTML = '';
+        if (data.rankings && data.rankings.length > 0) {
+          data.rankings.forEach((entry, idx) => {
+            const isMe = entry.profileId === activeProfileId ? 'style="background-color:rgba(99,102,241,0.25); font-weight:bold;"' : '';
+            tableBody.innerHTML += `
+              <tr ${isMe}>
+                <td>#${idx + 1}</td>
+                <td>${entry.name} (${entry.difficulty})</td>
+                <td style="color:var(--color-success); font-weight:600;">₹${(entry.netWorth / 100).toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+                <td>Week ${entry.currentWeek}</td>
+              </tr>
+            `;
+          });
+        } else {
+          tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No entries in this cohort.</td></tr>';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+  </script>
 </body>
 </html>

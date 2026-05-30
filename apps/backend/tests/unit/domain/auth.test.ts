@@ -6,8 +6,8 @@ import { isValidEmail, isValidName, validatePassword } from '../../../src/domain
 
 describe('validatePassword', () => {
   it('returns no errors for a valid password', () => {
-    expect(validatePassword('SecurePass1')).toEqual([]);
-    expect(validatePassword('Abc12345')).toEqual([]);
+    expect(validatePassword('SecurePass1!')).toEqual([]);
+    expect(validatePassword('Abc@12345')).toEqual([]);
   });
 
   it('returns an error when password is too short', () => {

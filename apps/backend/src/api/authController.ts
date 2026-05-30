@@ -22,8 +22,10 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
       return;
     }
 
-    const user = await authService.register({ email, name, password });
-    res.status(201).json({ user });
+// Register new user and then log them in to get a JWT
+    const newUser = await authService.register({ email, name, password });
+    const loginResult = await authService.login({ email, password });
+    res.status(201).json({ token: loginResult.token, user: newUser });
   } catch (err) {
     next(err);
   }
@@ -43,6 +45,27 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const result = await authService.login({ email, password });
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /auth/google
+ * Authenticates a user using Google (Auto-creates account if not exists).
+ * Body: { email: string, name: string }
+ */
+router.post('/google', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, name } = req.body;
+
+    if (!email || !name) {
+      res.status(400).json({ error: 'email and name are required', code: 'MISSING_FIELDS' });
+      return;
+    }
+
+    const result = await authService.googleLogin({ email, name });
     res.status(200).json(result);
   } catch (err) {
     next(err);

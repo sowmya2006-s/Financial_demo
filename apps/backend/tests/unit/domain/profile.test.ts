@@ -2,7 +2,7 @@
 // Tests for pure profile domain functions.
 // No mocks needed — these are pure functions with no dependencies.
 
-import { Difficulty } from '@prisma/client';
+import { Difficulty } from '../../../src/types/enums';
 import {
   canCreateProfile,
   isValidDifficulty,

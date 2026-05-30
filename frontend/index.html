@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Financial Literacy Simulator – Demo UI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Financial Literacy Simulator (Demo)</h1>
+  </header>
+
+  <!-- Sections ordered by milestones -->
+  <section id="m1">
+    <h2>M1 – Project Skeleton &amp; Tooling</h2>
+    <p>The backend server is a simple Express app with a health‑check endpoint.</p>
+    <button id="check-health">Check Server Health</button>
+    <pre id="health-output"></pre>
+  </section>
+
+  <section id="m2">
+    <h2>M2 – Authentication</h2>
+    <div class="auth-forms">
+      <div class="form-group">
+        <h3>Register</h3>
+        <input type="email" id="reg-email" placeholder="Email" />
+        <input type="password" id="reg-pass" placeholder="Password" />
+        <button id="register-btn">Register</button>
+        <pre id="register-output"></pre>
+      </div>
+      <div class="form-group">
+        <h3>Login</h3>
+        <input type="email" id="login-email" placeholder="Email" />
+        <input type="password" id="login-pass" placeholder="Password" />
+        <button id="login-btn">Login</button>
+        <pre id="login-output"></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="m3">
+    <h2>M3 – Profiles &amp; Cohorts</h2>
+    <div class="profile-ops">
+      <input type="text" id="profile-name" placeholder="Profile name" />
+      <select id="profile-difficulty">
+        <option value="BEGINNER">BEGINNER</option>
+        <option value="STANDARD">STANDARD</option>
+        <option value="HARD">HARD</option>
+      </select>
+      <button id="create-profile-btn">Create Profile</button>
+      <pre id="profile-output"></pre>
+    </div>
+    <div class="profile-list">
+      <h3>My Profiles</h3>
+      <ul id="profile-list"></ul>
+    </div>
+  </section>
+
+  <section id="m4">
+    <h2>M4 – Weekly Engine</h2>
+    <div class="weekly-ops">
+      <select id="active-profile-select"></select>
+      <button id="advance-week-btn">Advance Week</button>
+      <pre id="week-output"></pre>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

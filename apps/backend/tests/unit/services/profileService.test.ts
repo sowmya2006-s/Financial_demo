@@ -2,7 +2,7 @@
 // Tests for profileService business logic.
 // Repositories and Prisma are mocked so tests remain fast and DB-free.
 
-import { Difficulty } from '@prisma/client';
+import { Difficulty } from '../../../src/types/enums';
 import { profileService } from '../../../src/services/profileService';
 import { profileRepository } from '../../../src/repositories/profileRepository';
 import { cohortRepository } from '../../../src/repositories/cohortRepository';
@@ -24,6 +24,9 @@ jest.mock('../../../src/config/prisma', () => ({
           createMany: jest.fn().mockResolvedValue({ count: 2 }),
         },
         gameState: {
+          create: jest.fn().mockResolvedValue({}),
+        },
+        transaction: {
           create: jest.fn().mockResolvedValue({}),
         },
       };
@@ -66,6 +69,7 @@ describe('profileService.createProfile', () => {
     const result = await profileService.createProfile('user-uuid-123', {
       name: 'Test Profile',
       difficulty: Difficulty.BEGINNER,
+      age: 22,
     });
 
     expect(result).toMatchObject({
@@ -80,6 +84,7 @@ describe('profileService.createProfile', () => {
     await profileService.createProfile('user-uuid-123', {
       name: 'Test',
       difficulty: Difficulty.BEGINNER,
+      age: 22,
     });
 
     expect(mockCohortRepo.findOrCreate).toHaveBeenCalledTimes(1);
@@ -95,6 +100,7 @@ describe('profileService.createProfile', () => {
       profileService.createProfile('user-uuid-123', {
         name: 'Another Standard',
         difficulty: Difficulty.STANDARD,
+        age: 22,
       }),
     ).rejects.toMatchObject({ statusCode: 409, code: 'PROFILE_LIMIT_REACHED' });
   });
@@ -106,6 +112,7 @@ describe('profileService.createProfile', () => {
       profileService.createProfile('user-uuid-123', {
         name: 'Another Hard',
         difficulty: Difficulty.HARD,
+        age: 22,
       }),
     ).rejects.toMatchObject({ statusCode: 409, code: 'PROFILE_LIMIT_REACHED' });
   });
@@ -117,6 +124,7 @@ describe('profileService.createProfile', () => {
       profileService.createProfile('user-uuid-123', {
         name: 'Fifth Profile',
         difficulty: Difficulty.BEGINNER,
+        age: 22,
       }),
     ).resolves.toBeDefined();
   });
@@ -128,6 +136,7 @@ describe('profileService.createProfile', () => {
       profileService.createProfile('user-uuid-123', {
         name: 'Sixth Profile',
         difficulty: Difficulty.BEGINNER,
+        age: 22,
       }),
     ).rejects.toMatchObject({ statusCode: 409, code: 'PROFILE_LIMIT_REACHED' });
   });
@@ -137,6 +146,7 @@ describe('profileService.createProfile', () => {
       profileService.createProfile('user-uuid-123', {
         name: '',
         difficulty: Difficulty.BEGINNER,
+        age: 22,
       }),
     ).rejects.toMatchObject({ statusCode: 400, code: 'VALIDATION_ERROR' });
   });
@@ -146,6 +156,7 @@ describe('profileService.createProfile', () => {
       profileService.createProfile('user-uuid-123', {
         name: 'Valid Name',
         difficulty: 'INVALID' as Difficulty,
+        age: 22,
       }),
     ).rejects.toMatchObject({ statusCode: 400, code: 'VALIDATION_ERROR' });
   });

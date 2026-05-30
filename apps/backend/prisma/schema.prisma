@@ -1,6 +1,8 @@
 // prisma/schema.prisma
-// Moolah Minds — Single source of truth for the database schema
-// Week 1-3 scope: Users, Auth, Profiles, Cohorts
+// Moolah Minds — Financial Life Simulation Game
+// Production schema: PostgreSQL-compatible (currently using SQLite for local dev).
+// All field types and constraints are PostgreSQL-compatible.
+// To migrate to PostgreSQL: change provider to "postgresql" and update DATABASE_URL.
 
 generator client {
   provider = "prisma-client-js"
@@ -11,8 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enums removed for SQLite compatibility - handled as Strings in application logic
-
 // ─── User & Auth ─────────────────────────────────────────────────────────────
 
 model User {
@@ -20,6 +20,8 @@ model User {
   email        String    @unique
   name         String
   passwordHash String
+  googleId     String?   @unique  // populated when user logs in via Google OAuth
+  isGoogleUser Boolean   @default(false)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -32,9 +34,7 @@ model User {
 
 model Cohort {
   id         String     @id @default(uuid())
-  // ISO year + week number: e.g. "2025-W03"
-  // All users registering in the same calendar week belong to the same cohort
-  weekKey    String     @unique
+  weekKey    String     @unique   // ISO week key e.g. "2026-W24"
   startedAt  DateTime   @default(now())
 
   profiles   Profile[]
@@ -45,60 +45,77 @@ model Cohort {
 // ─── Profiles ────────────────────────────────────────────────────────────────
 
 model Profile {
-  id         String     @id @default(uuid())
-  userId     String
-  cohortId   String
-  name       String
-  difficulty String
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id                String     @id @default(uuid())
+  userId            String
+  active            Boolean    @default(false)
+  cohortId          String
+  name              String
+  age               Int        @default(22)
+  startingAge       Int        @default(22)  // locked at creation for retirement formula
+  career            String     @default("")
+  startingSalary    Int        @default(0)   // in paise
+  startingSavings   Int        @default(0)   // in paise
+  livingOption      String?    // "INDIVIDUAL_RENT" | "SHARED_RENT" | "FULLY_PAID_HOUSE"
+  housingStatus     String     @default("NONE") // "NONE" | "RENTING" | "SHARED_RENT" | "HOME_LOAN" | "OWNED"
+  hasHomeLoan       Boolean    @default(false)
+  hasVehicleLoan    Boolean    @default(false)
+  hasPersonalLoan   Boolean    @default(false)
+  hasVehicle        Boolean    @default(false)  // tracks vehicle ownership (affects transport cost)
+  difficulty        String     @default("BEGINNER")
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cohort     Cohort     @relation(fields: [cohortId], references: [id])
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cohort            Cohort     @relation(fields: [cohortId], references: [id])
 
-  // Populated in later milestones
-  gameState  GameState?
-  transactions Transaction[]
-  obligations  Obligation[]
-  investments  Investment[]
-  decisions    Decision[]
-  events       GameEvent[]
-  weeklySummaries WeeklySummary[]
+  gameState         GameState?
+  transactions      Transaction[]
+  obligations       Obligation[]
+  investments       Investment[]
+  decisions         Decision[]
+  events            GameEvent[]
+  weeklySummaries   WeeklySummary[]
+  loans             Loan[]
+  weeklyBillRecords WeeklyBillRecord[]
 
   @@map("profiles")
 }
 
 // ─── Game State ───────────────────────────────────────────────────────────────
-// Scaffolded here; fully implemented in Milestone 4
 
 model GameState {
-  id          String     @id @default(uuid())
-  profileId   String     @unique
-  currentWeek Int        @default(1)
-  salary      Int        // stored in paise/cents to avoid floating point
-  creditScore Int        @default(700)
-  socialScore Int        @default(50)
-  wellBeing   Int        @default(75)
-  status      String     @default("ACTIVE")
-  updatedAt   DateTime   @updatedAt
+  id                       String   @id @default(uuid())
+  profileId                String   @unique
+  currentWeek              Int      @default(1)
+  salary                   Int      // stored in paise
+  creditScore              Int      @default(650)
+  socialScore              Int      @default(20)
+  wellBeing                Int      @default(50)
+  consecutiveNegativeWeeks Int      @default(0)
+  missedPayments           Int      @default(0)  // total missed bill payments across game
+  currentRent              Int      @default(0)   // current rent amount in paise (increases with inflation)
+  promotionScore           Int      @default(0)   // tracks career progression score
+  selfInvestmentCount      Int      @default(0)   // self-investments in last 12 weeks window
+  workConsistencyScore     Int      @default(50)  // 0-100 work consistency
+  status                   String   @default("ACTIVE") // "ACTIVE" | "RETIRED" | "BANKRUPT"
+  updatedAt                DateTime @updatedAt
 
-  profile     Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile                  Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@map("game_states")
 }
 
 // ─── Transactions (Immutable Ledger) ─────────────────────────────────────────
-// RULE: balance is NEVER stored as a column — always derived via SUM(amount)
 
 model Transaction {
   id          String   @id @default(uuid())
   profileId   String
-  type        String
-  category    String   // e.g. 'rent', 'insurance', 'stocks', 'salary'
-  amount      Int      // positive = credit, negative = debit (in paise/cents)
+  type        String   // "CREDIT" | "DEBIT"
+  category    String   // e.g. 'salary', 'rent', 'food', 'tax', 'emi', 'investment', 'spend'
+  amount      Int      // positive = credit, negative = debit (in paise)
   gameWeek    Int
   description String
-  metadata    String?  // JSON string: flexible field for extra context (event details, asset info)
+  metadata    String?  // JSON string for extra data
   createdAt   DateTime @default(now())
 
   profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -108,13 +125,16 @@ model Transaction {
 }
 
 // ─── Obligations ─────────────────────────────────────────────────────────────
+// Static recurring commitments (EMIs, insurance subscriptions).
+// Dynamic bills (food, transport, tax, utilities) are now handled by weeklyBillService.
 
 model Obligation {
   id          String   @id @default(uuid())
   profileId   String
-  label       String   // e.g. 'Rent', 'Health Insurance', 'Car EMI'
-  category    String
-  amount      Int      // amount deducted per week (in paise/cents)
+  label       String   // e.g. 'Rent', 'Food', 'HOME EMI'
+  category    String   // e.g. 'rent', 'food', 'emi', 'tax'
+  amount      Int      // amount deducted per week (in paise)
+  startWeek   Int?     // week when obligation becomes active
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 
@@ -123,22 +143,64 @@ model Obligation {
   @@map("obligations")
 }
 
+// ─── Weekly Bill Records ──────────────────────────────────────────────────────
+// Immutable record of every bill generated and its payment status per week.
+// Required for: financial history, bankruptcy logic, analytics, leaderboard discipline score.
+
+model WeeklyBillRecord {
+  id          String   @id @default(uuid())
+  profileId   String
+  gameWeek    Int
+  billName    String   // e.g. "Income Tax", "Food & Groceries", "HOME EMI"
+  category    String   // e.g. "tax", "food", "emi", "rent", "transport", "utilities"
+  amount      Int      // amount in paise (always positive)
+  paidStatus  String   // "PAID" | "MISSED"
+  paymentDate DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, gameWeek])
+  @@map("weekly_bill_records")
+}
+
+// ─── Loans ───────────────────────────────────────────────────────────────────
+
+model Loan {
+  id              String   @id @default(uuid())
+  profileId       String
+  type            String   // "HOME" | "VEHICLE" | "PERSONAL"
+  principalAmount Int      // in paise
+  interestRate    Float    // annual percentage
+  tenureMonths    Int
+  emiAmount       Int      // monthly EMI in paise
+  remainingAmount Int      // remaining principal in paise
+  remainingMonths Int      // remaining months
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("loans")
+}
+
 // ─── Investments ─────────────────────────────────────────────────────────────
 
 model Investment {
-  id           String   @id @default(uuid())
-  profileId    String
-  productCode  String   // e.g. 'FD_6M', 'NIFTY_MF', 'STOCK_TECH'
-  type         String   // 'FD' | 'MUTUAL_FUND' | 'STOCK'
+  id              String   @id @default(uuid())
+  profileId       String
+  productCode     String   // e.g. 'FD_6M', 'COURSE_JS', 'HOUSE_1'
+  type            String   // 'FD' | 'MUTUAL_FUND' | 'STOCK' | 'COURSE' | 'BOOK' | 'CERTIFICATION' | 'HOUSE' | 'LAND'
+  name            String   @default("") // human-readable name
   principalAmount Int
-  currentValue Int
+  currentValue    Int
   purchasedAtWeek Int
-  maturityWeek Int?     // null for open-ended products
-  isActive     Boolean  @default(true)
-  metadata     String?  // JSON string
-  createdAt    DateTime @default(now())
+  maturityWeek    Int?
+  isActive        Boolean  @default(true)
+  metadata        String?  // JSON string
+  createdAt       DateTime @default(now())
 
-  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@map("investments")
 }
@@ -149,7 +211,7 @@ model Decision {
   id          String   @id @default(uuid())
   profileId   String
   gameWeek    Int
-  type        String   // 'PURCHASE' | 'INVEST' | 'SELF_INVEST' | 'REDEEM'
+  type        String   // 'PURCHASE' | 'INVEST' | 'SELF_INVEST' | 'REDEEM' | 'SPEND' | 'SKIP'
   category    String
   amount      Int
   metadata    String?  // JSON string
@@ -168,10 +230,10 @@ model GameEvent {
   id          String   @id @default(uuid())
   profileId   String
   gameWeek    Int
-  eventCode   String   // e.g. 'HEALTH_EMERGENCY', 'MARKET_CRASH'
-  category    String   // 'CAREER' | 'HEALTH' | 'MARKET' | 'SOCIAL'
+  eventCode   String
+  category    String   // 'CAREER' | 'HEALTH' | 'MARKET' | 'SOCIAL' | 'FINANCIAL'
   description String
-  effects     String   // JSON string: { creditScoreDelta, wellBeingDelta, extraExpense, etc. }
+  effects     String   // JSON string
   createdAt   DateTime @default(now())
 
   profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -186,10 +248,12 @@ model WeeklySummary {
   id              String   @id @default(uuid())
   profileId       String
   gameWeek        Int
-  beforeMetrics   String   // JSON string: snapshot of metrics at start of week
-  afterMetrics    String   // JSON string: snapshot of metrics at end of week
-  eventsTriggered String   // JSON string: array of event codes that fired
-  explanations    String   // JSON string: human-readable causal strings array
+  beforeMetrics   String   // JSON string
+  afterMetrics    String   // JSON string
+  eventsTriggered String   // JSON string
+  explanations    String   // JSON string
+  billsTotal      Int      @default(0)  // total bills for that week in paise
+  billsPaid       Int      @default(0)  // total bills paid in paise
   createdAt       DateTime @default(now())
 
   profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)

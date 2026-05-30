@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moolah Minds — Weekly Bills Viewer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#0d1117;color:#e6edf3;min-height:100vh}
+
+  .header{background:linear-gradient(135deg,#1a1f2e,#0d1117);border-bottom:1px solid #21262d;padding:18px 32px;display:flex;align-items:center;gap:12px}
+  .header h1{font-size:20px;font-weight:700;background:linear-gradient(135deg,#58a6ff,#3fb950);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .badge{background:#238636;color:#fff;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+
+  .main{max-width:1000px;margin:0 auto;padding:32px 20px}
+
+  /* Auth Section */
+  .card{background:#161b22;border:1px solid #21262d;border-radius:12px;padding:24px;margin-bottom:24px}
+  .card h2{font-size:15px;font-weight:600;color:#8b949e;margin-bottom:16px;text-transform:uppercase;letter-spacing:.5px}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  input{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px 14px;color:#e6edf3;font-size:14px;flex:1;min-width:160px;outline:none;transition:.2s}
+  input:focus{border-color:#58a6ff;box-shadow:0 0 0 3px rgba(88,166,255,.1)}
+  button{padding:10px 20px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap}
+  .btn-primary{background:#238636;color:#fff}
+  .btn-primary:hover{background:#2ea043}
+  .btn-blue{background:#1f6feb;color:#fff}
+  .btn-blue:hover{background:#388bfd}
+  .btn-orange{background:#d29922;color:#fff}
+  .btn-orange:hover{background:#e3b341}
+  .btn-purple{background:#6e40c9;color:#fff}
+  .btn-purple:hover{background:#8250df}
+  button:disabled{opacity:.4;cursor:not-allowed}
+
+  .status{margin-top:10px;font-size:13px;padding:8px 12px;border-radius:6px;display:none}
+  .status.ok{background:rgba(46,160,67,.15);color:#3fb950;border:1px solid rgba(46,160,67,.3);display:block}
+  .status.err{background:rgba(248,81,73,.15);color:#f85149;border:1px solid rgba(248,81,73,.3);display:block}
+
+  /* Dashboard bar */
+  .dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+  .metric{background:#161b22;border:1px solid #21262d;border-radius:10px;padding:16px;text-align:center}
+  .metric .val{font-size:22px;font-weight:700;margin-bottom:4px}
+  .metric .lbl{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:.5px}
+  .metric.green .val{color:#3fb950}
+  .metric.blue .val{color:#58a6ff}
+  .metric.yellow .val{color:#e3b341}
+  .metric.red .val{color:#f85149}
+  .metric.purple .val{color:#bc8cff}
+
+  /* Bills table */
+  .bills-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .week-badge{background:#1f6feb22;color:#58a6ff;border:1px solid #1f6feb55;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+  .totals{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+  .total-item{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:10px 16px}
+  .total-item span{display:block}
+  .total-item .t-label{font-size:11px;color:#8b949e;margin-bottom:2px}
+  .total-item .t-val{font-size:16px;font-weight:700}
+
+  .bill-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:8px;margin-bottom:8px;background:#0d1117;border:1px solid #21262d}
+  .bill-item.paid{border-left:3px solid #3fb950}
+  .bill-item.missed{border-left:3px solid #f85149;background:#f8514908}
+  .bill-left{display:flex;align-items:center;gap:10px}
+  .bill-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .bill-name{font-size:14px;font-weight:500}
+  .bill-cat{font-size:11px;color:#8b949e;margin-top:2px}
+  .bill-right{text-align:right}
+  .bill-amount{font-size:15px;font-weight:700;color:#e6edf3}
+  .pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:3px;display:inline-block}
+  .pill.paid{background:#238636;color:#fff}
+  .pill.missed{background:#da3633;color:#fff}
+
+  .alerts{margin-bottom:16px}
+  .alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:6px;display:flex;gap:8px;align-items:flex-start}
+  .alert.stress{background:rgba(210,153,34,.12);border:1px solid rgba(210,153,34,.3);color:#e3b341}
+  .alert.info{background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.2);color:#58a6ff}
+
+  .empty{text-align:center;padding:40px;color:#8b949e;font-size:14px}
+  .step-indicator{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+  .step{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid #30363d;color:#8b949e}
+  .step.done{background:#238636;border-color:#238636;color:#fff}
+  .step.active{background:#1f6feb;border-color:#1f6feb;color:#fff}
+  select{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px 14px;color:#e6edf3;font-size:14px;outline:none}
+
+  .cat-icons{tax:'💰',food:'🛒',transport:'🚌',mobile:'📱',rent:'🏠',utilities:'⚡'}
+
+  #log{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:12px 16px;font-family:monospace;font-size:12px;color:#8b949e;max-height:120px;overflow-y:auto;margin-top:12px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span style="font-size:24px">💰</span>
+  <h1>Moolah Minds — Weekly Bills Viewer</h1>
+  <span class="badge">LIVE</span>
+</div>
+
+<div class="main">
+
+  <!-- Steps -->
+  <div class="step-indicator">
+    <div class="step active" id="s1">1. Login / Register</div>
+    <div class="step" id="s2">2. Create Profile</div>
+    <div class="step" id="s3">3. Choose Housing</div>
+    <div class="step" id="s4">4. View Dashboard</div>
+    <div class="step" id="s5">5. Weekly Bills</div>
+  </div>
+
+  <!-- STEP 1: Auth -->
+  <div class="card" id="authCard">
+    <h2>Step 1 — Login or Register</h2>
+    <div class="row">
+      <input id="email" placeholder="Email" value="demo@moolah.com">
+      <input id="pass" type="password" placeholder="Password" value="Demo@1234">
+      <button class="btn-primary" onclick="register()">Register</button>
+      <button class="btn-blue" onclick="login()">Login</button>
+    </div>
+    <div class="status" id="authStatus"></div>
+  </div>
+
+  <!-- STEP 2: Profile -->
+  <div class="card" id="profileCard" style="display:none">
+    <h2>Step 2 — Create Profile</h2>
+    <div class="row">
+      <input id="pname" placeholder="Your Name" value="Sowmya">
+      <input id="page" placeholder="Age" value="22" type="number" style="max-width:100px">
+      <select id="pdiff">
+        <option value="BEGINNER">Beginner (₹45k salary)</option>
+        <option value="STANDARD">Standard</option>
+        <option value="HARD">Hard</option>
+      </select>
+      <button class="btn-primary" onclick="createProfile()">Create Profile</button>
+    </div>
+    <div class="status" id="profileStatus"></div>
+  </div>
+
+  <!-- STEP 3: Housing -->
+  <div class="card" id="housingCard" style="display:none">
+    <h2>Step 3 — Choose Housing</h2>
+    <div class="row">
+      <select id="housing">
+        <option value="INDIVIDUAL_RENT">🏠 Rent House (₹8,000–₹15,000/mo)</option>
+        <option value="SHARED_RENT">🏘️ Shared / Hostel (₹3,000–₹6,000/mo)</option>
+        <option value="HOME_LOAN">🏡 Buy via Home Loan (₹35L loan)</option>
+      </select>
+      <button class="btn-orange" onclick="setHousing()">Confirm Housing</button>
+    </div>
+    <div class="status" id="housingStatus"></div>
+  </div>
+
+  <!-- STEP 4: Dashboard -->
+  <div id="dashSection" style="display:none">
+    <div class="dashboard-grid" id="dashGrid"></div>
+  </div>
+
+  <!-- STEP 5: Weekly Bills -->
+  <div class="card" id="billsCard" style="display:none">
+    <h2>Step 4 — Advance Week & See Bills</h2>
+    <div class="row">
+      <button class="btn-purple" onclick="advanceWeek()">⏭️ Advance to Next Week</button>
+      <button class="btn-blue" onclick="loadDashboard()">🔄 Refresh Dashboard</button>
+    </div>
+    <div class="status" id="billStatus"></div>
+    <div id="log"></div>
+  </div>
+
+  <!-- Bills display -->
+  <div id="billsDisplay" style="display:none">
+    <div class="bills-header">
+      <h2 style="font-size:16px;font-weight:700">📋 Weekly Bill Breakdown</h2>
+      <span class="week-badge" id="weekBadge">Week 1</span>
+    </div>
+    <div class="alerts" id="alertsBox"></div>
+    <div class="totals" id="totalsBox"></div>
+    <div id="billsList"></div>
+  </div>
+
+</div>
+
+<script>
+const API = 'http://localhost:3005';
+let TOKEN = '', PROFILE_ID = '';
+
+const catIcon = {
+  tax:'💰', food:'🛒', transport:'🚌', mobile:'📱',
+  rent:'🏠', utilities:'⚡', emi:'🏦', event:'⚠️', salary:'💵'
+};
+
+function log(msg) {
+  const el = document.getElementById('log');
+  if (el) { el.innerHTML += msg + '<br>'; el.scrollTop = el.scrollHeight; }
+}
+function status(id, msg, ok) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.className = 'status ' + (ok ? 'ok' : 'err');
+}
+function stepDone(n) {
+  document.getElementById('s'+n).className='step done';
+  if(n<5) document.getElementById('s'+(n+1)).className='step active';
+}
+function fmt(paise) { return '₹' + Math.round(paise/100).toLocaleString('en-IN'); }
+
+async function register() {
+  const email = document.getElementById('email').value;
+  const pass  = document.getElementById('pass').value;
+  const name  = email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+  const r = await fetch(API+'/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass,name})});
+  const d = await r.json();
+  if(d.token){TOKEN=d.token;stepDone(1);document.getElementById('authCard').style.display='none';document.getElementById('profileCard').style.display='block';status('authStatus','Registered! ✓',true);}
+  else status('authStatus', d.message || JSON.stringify(d), false);
+}
+
+async function login() {
+  const email = document.getElementById('email').value;
+  const pass  = document.getElementById('pass').value;
+  const r = await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+  const d = await r.json();
+  if(d.token){
+    TOKEN=d.token;
+    stepDone(1);
+    document.getElementById('authCard').style.display='none';
+    // check for existing profile
+    const pr = await fetch(API+'/profiles',{headers:{Authorization:'Bearer '+TOKEN}});
+    const pd = await pr.json();
+    if(pd.profiles && pd.profiles.length>0){
+      PROFILE_ID = pd.profiles[0].id;
+      document.getElementById('profileCard').style.display='none';
+      document.getElementById('housingCard').style.display='none';
+      document.getElementById('billsCard').style.display='block';
+      stepDone(2); stepDone(3);
+      loadDashboard();
+    } else {
+      document.getElementById('profileCard').style.display='block';
+    }
+    status('authStatus','Logged in! ✓',true);
+  } else status('authStatus', d.message || 'Login failed', false);
+}
+
+async function createProfile() {
+  const name = document.getElementById('pname').value;
+  const age  = parseInt(document.getElementById('page').value);
+  const difficulty = document.getElementById('pdiff').value;
+  const r = await fetch(API+'/profiles',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},body:JSON.stringify({name,difficulty,age})});
+  const d = await r.json();
+  if(d.profile){
+    PROFILE_ID=d.profile.id;
+    status('profileStatus',`Profile created! Salary: ₹${Math.round(d.profile.startingSalary/100).toLocaleString()} | Savings: ₹${Math.round(d.profile.startingSavings/100).toLocaleString()}`,true);
+    stepDone(2);
+    document.getElementById('profileCard').style.display='none';
+    document.getElementById('housingCard').style.display='block';
+  } else status('profileStatus', d.message || JSON.stringify(d), false);
+}
+
+async function setHousing() {
+  const livingOption = document.getElementById('housing').value;
+  const r = await fetch(API+'/profiles/'+PROFILE_ID+'/living-option',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},body:JSON.stringify({livingOption})});
+  const d = await r.json();
+  if(d.profile || r.ok){
+    status('housingStatus','Housing set! ✓',true);
+    stepDone(3);
+    document.getElementById('housingCard').style.display='none';
+    document.getElementById('billsCard').style.display='block';
+    loadDashboard();
+  } else status('housingStatus', d.message || JSON.stringify(d), false);
+}
+
+async function loadDashboard() {
+  const r = await fetch(API+'/api/dashboard/'+PROFILE_ID,{headers:{Authorization:'Bearer '+TOKEN}});
+  const d = await r.json();
+  stepDone(4);
+  document.getElementById('dashSection').style.display='block';
+  document.getElementById('dashGrid').innerHTML = `
+    <div class="metric green"><div class="val">₹${d.balance?.toLocaleString('en-IN')}</div><div class="lbl">Balance</div></div>
+    <div class="metric blue"><div class="val">₹${d.salary?.toLocaleString('en-IN')}</div><div class="lbl">Salary/Month</div></div>
+    <div class="metric yellow"><div class="val">${d.creditScore}</div><div class="lbl">Credit Score</div></div>
+    <div class="metric purple"><div class="val">${d.wellBeing}/100</div><div class="lbl">Well-Being</div></div>
+    <div class="metric blue"><div class="val">Week ${d.currentWeek}</div><div class="lbl">${d.cohortId}</div></div>
+    <div class="metric green"><div class="val">${d.weeksUntilRetirement}</div><div class="lbl">Wks to Retire</div></div>
+  `;
+
+  // Show last week bills if exist
+  if(d.lastWeekBills && d.lastWeekBills.breakdown && d.lastWeekBills.breakdown.length>0){
+    renderBills(d.lastWeekBills, d.currentWeek - 1);
+  }
+}
+
+async function advanceWeek() {
+  const btn = document.querySelector('button[onclick="advanceWeek()"]');
+  btn.disabled=true; btn.textContent='Processing…';
+  log('Submitting decisions...');
+
+  // Submit decisions
+  await fetch(API+'/game/'+PROFILE_ID+'/decisions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN},body:JSON.stringify({decisions:[]})});
+
+  log('Advancing week...');
+  const r = await fetch(API+'/game/'+PROFILE_ID+'/advance-week',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN}});
+  const d = await r.json();
+
+  btn.disabled=false; btn.textContent='⏭️ Advance to Next Week';
+
+  if(d.error){
+    status('billStatus', d.error, false);
+    log('Error: '+d.error);
+    return;
+  }
+
+  log('Week advanced! Bills generated: '+(d.billBreakdown?.length||0));
+  status('billStatus','Week advanced successfully! Bills generated below ↓',true);
+  stepDone(5);
+
+  // Refresh dashboard and show bills
+  await loadDashboard();
+  if(d.billBreakdown && d.billBreakdown.length>0){
+    renderBills({
+      week: d.gameWeek || 1,
+      totalBills: Math.round(d.billsTotal/100),
+      totalPaid:  Math.round(d.billsPaid/100),
+      breakdown: d.billBreakdown.map(b=>({...b, amount: Math.round(b.amount/100)}))
+    }, d.gameWeek);
+  }
+}
+
+function renderBills(data, week) {
+  document.getElementById('billsDisplay').style.display='block';
+  document.getElementById('weekBadge').textContent = 'Week '+(week||data.week||'');
+
+  const missed = data.breakdown.filter(b=>b.paidStatus==='MISSED').length;
+  const stressPct = data.totalBills > 0 ? Math.round((data.totalBills/450)*100) : 0;
+
+  let alerts='';
+  if(missed>0) alerts+=`<div class="alert stress">⚠️ ${missed} bill(s) were MISSED due to insufficient balance. Credit score penalised.</div>`;
+  if(data.stressTriggered||data.totalBills>27000) alerts+=`<div class="alert stress">😰 Financial stress triggered — bills exceeded 60% of salary. Well-being reduced by 10.</div>`;
+  if(missed===0) alerts+=`<div class="alert info">✅ All bills paid on time! Credit score +10.</div>`;
+  document.getElementById('alertsBox').innerHTML=alerts;
+
+  document.getElementById('totalsBox').innerHTML=`
+    <div class="total-item"><span class="t-label">Total Bills</span><span class="t-val" style="color:#f85149">₹${data.totalBills?.toLocaleString('en-IN')}</span></div>
+    <div class="total-item"><span class="t-label">Total Paid</span><span class="t-val" style="color:#3fb950">₹${data.totalPaid?.toLocaleString('en-IN')}</span></div>
+    <div class="total-item"><span class="t-label">Unpaid</span><span class="t-val" style="color:#e3b341">₹${((data.totalBills||0)-(data.totalPaid||0)).toLocaleString('en-IN')}</span></div>
+    <div class="total-item"><span class="t-label">Bills Count</span><span class="t-val" style="color:#58a6ff">${data.breakdown.length}</span></div>
+  `;
+
+  const list = data.breakdown.map(b=>{
+    const icon = catIcon[b.category]||'📄';
+    const cls = b.paidStatus==='PAID'?'paid':'missed';
+    return `<div class="bill-item ${cls}">
+      <div class="bill-left">
+        <div class="bill-icon" style="background:${cls==='paid'?'#23863622':'#da363322'}">${icon}</div>
+        <div>
+          <div class="bill-name">${b.billName}</div>
+          <div class="bill-cat">${b.category?.toUpperCase()}</div>
+        </div>
+      </div>
+      <div class="bill-right">
+        <div class="bill-amount">₹${(b.amount||0).toLocaleString('en-IN')}</div>
+        <span class="pill ${cls}">${b.paidStatus}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('billsList').innerHTML = list || '<div class="empty">No bills found for this week.</div>';
+  document.getElementById('billsDisplay').scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>

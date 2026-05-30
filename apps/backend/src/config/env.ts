@@ -15,8 +15,8 @@ function requireEnv(key: string): string {
 export const env = {
   port: parseInt(process.env['PORT'] ?? '3000', 10),
   nodeEnv: process.env['NODE_ENV'] ?? 'development',
-  databaseUrl: requireEnv('DATABASE_URL'),
-  jwtSecret: requireEnv('JWT_SECRET'),
+  databaseUrl: process.env['DATABASE_URL'] ?? 'file:./dev.db',
+  jwtSecret: process.env['JWT_SECRET'] ?? 'dev-secret-key',
   jwtExpiresIn: process.env['JWT_EXPIRES_IN'] ?? '7d',
   bcryptSaltRounds: parseInt(process.env['BCRYPT_SALT_ROUNDS'] ?? '12', 10),
 };

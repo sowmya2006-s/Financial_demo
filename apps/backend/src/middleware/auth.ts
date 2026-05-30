@@ -10,7 +10,9 @@ import { AuthPayload } from '../types';
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
+  console.log('Auth Header:', authHeader);
 
+  if (req.method === 'OPTIONS') { next(); return; }
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Missing or malformed Authorization header', code: 'AUTH_MISSING' });
     return;
@@ -22,7 +24,8 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     const payload = jwt.verify(token, env.jwtSecret) as AuthPayload;
     req.user = payload;
     next();
-  } catch {
+  } catch (err) {
+    console.error('JWT verification error:', err);
     res.status(401).json({ error: 'Invalid or expired token', code: 'AUTH_INVALID' });
   }
 }

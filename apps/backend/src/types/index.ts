@@ -36,6 +36,8 @@ export interface AuthResponse {
 export interface CreateProfileInput {
   name: string;
   difficulty: Difficulty;
+  age: number;
+
 }
 
 export interface ProfileResponse {
@@ -43,6 +45,10 @@ export interface ProfileResponse {
   name: string;
   difficulty: Difficulty;
   cohortId: string;
+  age: number;
+  career: string;
+  startingSalary: number;
+  startingSavings: number;
   createdAt: Date;
 }
 

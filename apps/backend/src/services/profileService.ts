@@ -2,16 +2,44 @@
 // All profile and cohort business logic lives here.
 // Enforces: profile limits per difficulty, cohort assignment, profile ownership checks.
 
-import { Profile } from '@prisma/client';
+import prisma from '../config/prisma';
+import { AppError } from '../middleware/errorHandler';
+import { GAME_CONSTANTS } from '../config/constants';
 import { Difficulty } from '../types/enums';
+import {
+  isValidProfileName,
+  isValidDifficulty,
+  canCreateProfile,
+  generateCareer,
+  calculateStartingSalary,
+  calculateStartingSavings,
+  calculateWeeksUntilRetirement,
+} from '../domain/profile';
 import { profileRepository } from '../repositories/profileRepository';
 import { cohortRepository } from '../repositories/cohortRepository';
-import { canCreateProfile, isValidDifficulty, isValidProfileName } from '../domain/profile';
+import { Profile } from '@prisma/client';
 import { getISOWeekKey } from '../domain/cohort';
-import { AppError } from '../middleware/errorHandler';
-import { CreateProfileInput, ProfileResponse } from '../types';
-import { GAME_CONSTANTS } from '../config/constants';
-import prisma from '../config/prisma';
+
+export interface CreateProfileInput {
+  name: string;
+  difficulty: Difficulty;
+  age: number;
+}
+
+export interface ProfileResponse {
+  id: string;
+  name: string;
+  difficulty: string;
+  cohortId: string;
+  cohortWeekKey: string;
+  age: number;
+  startingAge: number;
+  career: string;
+  startingSalary: number;
+  startingSavings: number;
+  weeksUntilRetirement: number;
+  createdAt: Date;
+}
 
 export const profileService = {
   /**
@@ -22,6 +50,12 @@ export const profileService = {
    * 2. Enforce per-difficulty profile limit
    * 3. Find or create cohort for the current calendar week
    * 4. Create profile (and initialise game state in a single transaction)
+   *
+   * Beginner Rule: All Beginner profiles start with identical conditions:
+   *   - salary: ₹45,000 (BEGINNER_STARTING_SALARY_PAISE)
+   *   - savings: ₹15,000 (BEGINNER_STARTING_SAVINGS_PAISE)
+   *   - career: Junior Developer
+   *   - creditScore: 650, socialScore: 20, wellBeing: 50
    */
   async createProfile(userId: string, input: CreateProfileInput): Promise<ProfileResponse> {
     // 1. Validate input
@@ -32,10 +66,19 @@ export const profileService = {
       throw new AppError(400, 'VALIDATION_ERROR', `Invalid difficulty. Must be one of: BEGINNER, STANDARD, HARD`);
     }
 
+    const age = (input.age && input.age >= 18 && input.age <= 40) ? input.age : 22;
+
+    // Beginner profiles are always pinned to age 22 for fair comparison
+    const effectiveAge = input.difficulty === 'BEGINNER' ? GAME_CONSTANTS.BEGINNER_STARTING_AGE : age;
+
     // 2. Enforce profile limits
     const existingCount = await profileRepository.countByUserAndDifficulty(userId, input.difficulty);
     if (!canCreateProfile(input.difficulty, existingCount)) {
-      const limits: Record<Difficulty, number> = { BEGINNER: 5, STANDARD: 1, HARD: 1 };
+      const limits: Record<Difficulty, number> = {
+        BEGINNER: GAME_CONSTANTS.MAX_PROFILES_PER_DIFFICULTY.BEGINNER,
+        STANDARD: GAME_CONSTANTS.MAX_PROFILES_PER_DIFFICULTY.STANDARD,
+        HARD: GAME_CONSTANTS.MAX_PROFILES_PER_DIFFICULTY.HARD,
+      };
       throw new AppError(
         409,
         'PROFILE_LIMIT_REACHED',
@@ -47,8 +90,12 @@ export const profileService = {
     const weekKey = getISOWeekKey(new Date());
     const cohort = await cohortRepository.findOrCreate(weekKey);
 
+    // Generate player attributes
+    const career        = generateCareer(input.difficulty, effectiveAge);
+    const startingSalary = calculateStartingSalary(input.difficulty, effectiveAge);
+    const startingSavings = calculateStartingSavings(input.difficulty, startingSalary);
+
     // 4. Create profile + initialise game state atomically
-    // This ensures a profile is never created without a corresponding game state
     const profile = await prisma.$transaction(async tx => {
       const newProfile = await tx.profile.create({
         data: {
@@ -56,28 +103,37 @@ export const profileService = {
           cohortId: cohort.id,
           name: input.name.trim(),
           difficulty: input.difficulty,
+          age: effectiveAge,
+          startingAge: effectiveAge,
+          career,
+          startingSalary,
+          startingSavings,
+          active: true,
         },
       });
 
-      // Seed default obligations
-      await tx.obligation.createMany({
-        data: GAME_CONSTANTS.DEFAULT_OBLIGATIONS.map(o => ({
+      // Opening savings credit (appears as week 0 / initial balance)
+      await tx.transaction.create({
+        data: {
           profileId: newProfile.id,
-          label: o.label,
-          category: o.category,
-          amount: o.amount,
-        })),
+          type: 'CREDIT',
+          category: 'savings',
+          amount: startingSavings,
+          gameWeek: 0,
+          description: 'Starting Savings',
+        },
       });
 
-      // Initialise game state at week 1
+      // Initialise game state with spec-correct default values
       await tx.gameState.create({
         data: {
           profileId: newProfile.id,
           currentWeek: 1,
-          salary: GAME_CONSTANTS.STARTING_SALARY_PAISE,
-          creditScore: GAME_CONSTANTS.DEFAULT_CREDIT_SCORE,
-          socialScore: GAME_CONSTANTS.DEFAULT_SOCIAL_SCORE,
-          wellBeing: GAME_CONSTANTS.DEFAULT_WELL_BEING,
+          salary: startingSalary,
+          creditScore: GAME_CONSTANTS.DEFAULT_CREDIT_SCORE,   // 650
+          socialScore: GAME_CONSTANTS.DEFAULT_SOCIAL_SCORE,   // 20
+          wellBeing:   GAME_CONSTANTS.DEFAULT_WELL_BEING,     // 50
+          missedPayments: 0,
           status: 'ACTIVE',
         },
       });
@@ -85,11 +141,20 @@ export const profileService = {
       return newProfile;
     });
 
+    const cohortWithData = await prisma.cohort.findUnique({ where: { id: cohort.id } });
+
     return {
       id: profile.id,
       name: profile.name,
       difficulty: profile.difficulty as Difficulty,
       cohortId: profile.cohortId,
+      cohortWeekKey: cohortWithData?.weekKey ?? weekKey,
+      age: profile.age,
+      startingAge: profile.startingAge,
+      career: profile.career,
+      startingSalary: profile.startingSalary,
+      startingSavings: profile.startingSavings,
+      weeksUntilRetirement: calculateWeeksUntilRetirement(profile.age),
       createdAt: profile.createdAt,
     };
   },

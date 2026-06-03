@@ -77,6 +77,10 @@ model Profile {
   weeklySummaries   WeeklySummary[]
   loans             Loan[]
   weeklyBillRecords WeeklyBillRecord[]
+  activeHousingAssetId String?
+  activeHousingAsset   HousingAsset? @relation("ActiveHousingAsset", fields: [activeHousingAssetId], references: [id])
+  housingAssets        HousingAsset[] @relation("ProfileHousingAssets")
+  spendRecords         SpendRecord[]
 
   @@map("profiles")
 }
@@ -169,17 +173,18 @@ model WeeklyBillRecord {
 model Loan {
   id              String   @id @default(uuid())
   profileId       String
-  type            String   // "HOME" | "VEHICLE" | "PERSONAL"
+  type            LoanType
   principalAmount Int      // in paise
   interestRate    Float    // annual percentage
   tenureMonths    Int
   emiAmount       Int      // monthly EMI in paise
   remainingAmount Int      // remaining principal in paise
-  remainingMonths Int      // remaining months
+  remainingMonths Int
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
 
   profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  emis            EMI[]
 
   @@map("loans")
 }
@@ -187,20 +192,20 @@ model Loan {
 // ─── Investments ─────────────────────────────────────────────────────────────
 
 model Investment {
-  id              String   @id @default(uuid())
+  id              String         @id @default(uuid())
   profileId       String
-  productCode     String   // e.g. 'FD_6M', 'COURSE_JS', 'HOUSE_1'
-  type            String   // 'FD' | 'MUTUAL_FUND' | 'STOCK' | 'COURSE' | 'BOOK' | 'CERTIFICATION' | 'HOUSE' | 'LAND'
-  name            String   @default("") // human-readable name
-  principalAmount Int
+  type            InvestmentType
+  name            String         @default("")
+  amount          Int
   currentValue    Int
+  expectedReturn  Float?
+  riskLevel       String?
   purchasedAtWeek Int
   maturityWeek    Int?
-  isActive        Boolean  @default(true)
-  metadata        String?  // JSON string
-  createdAt       DateTime @default(now())
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
 
-  profile         Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile         Profile        @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@map("investments")
 }
@@ -260,4 +265,87 @@ model WeeklySummary {
 
   @@unique([profileId, gameWeek])
   @@map("weekly_summaries")
+}
+
+// ─── Spend Records ────────────────────────────────────────────────────────────
+
+model SpendRecord {
+  id        String        @id @default(uuid())
+  profileId String
+  category  SpendCategory
+  itemName  String
+  amount    Int            // in paise
+  week      Int
+  createdAt DateTime      @default(now())
+
+  profile   Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("spend_records")
+}
+
+// ─── Housing Assets ───────────────────────────────────────────────────────────
+
+model HousingAsset {
+  id                 String      @id @default(uuid())
+  profileId          String
+  type               HousingType
+  name               String
+  value              Int         // value of asset in paise
+  monthlyExpense     Int         // in paise
+  socialStatusImpact Int
+  createdAt          DateTime    @default(now())
+
+  profile            Profile     @relation("ProfileHousingAssets", fields: [profileId], references: [id], onDelete: Cascade)
+  profilesWithActive Profile[]   @relation("ActiveHousingAsset")
+
+  @@map("housing_assets")
+}
+
+// ─── EMIs ────────────────────────────────────────────────────────────────────
+
+model EMI {
+  id        String   @id @default(uuid())
+  loanId    String
+  amount    Int      // monthly EMI amount in paise
+  week      Int
+  createdAt DateTime @default(now())
+
+  loan      Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  @@map("emis")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum InvestmentType {
+  BOOK
+  COURSE
+  CERTIFICATION
+  FD
+  MUTUAL_FUND
+  STOCK
+  LAND
+  HOUSE
+  PROPERTY
+}
+
+enum SpendCategory {
+  GADGET
+  WATCH
+  VACATION
+  DINING
+  ENTERTAINMENT
+  LUXURY
+}
+
+enum HousingType {
+  HOSTEL
+  RENT
+  BUY
+}
+
+enum LoanType {
+  HOME
+  VEHICLE
+  PERSONAL
 }

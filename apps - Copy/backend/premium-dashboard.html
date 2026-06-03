@@ -1,0 +1,584 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moolah Minds | Premium Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --accent-primary: #8b5cf6;
+      --accent-secondary: #06b6d4;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+        radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+        radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3 { font-family: 'Outfit', sans-serif; }
+
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Header Section */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 48px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    }
+
+    .brand h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: 1px solid var(--glass-border);
+      background: var(--card-bg);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border: none;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      padding: 24px;
+      border-radius: 20px;
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      color: var(--text-muted);
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .trend {
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .trend.up { color: var(--success); }
+    .trend.down { color: var(--danger); }
+
+    /* Main Sections */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      padding: 32px;
+      border-radius: 24px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .panel-header h2 {
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Status Indicators */
+    .status-ring {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 8px solid rgba(255,255,255,0.05);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .status-ring .val {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent-secondary);
+    }
+
+    .status-ring::after {
+      content: '';
+      position: absolute;
+      top: -8px; left: -8px; right: -8px; bottom: -8px;
+      border-radius: 50%;
+      border: 8px solid var(--accent-secondary);
+      border-top-color: transparent;
+      border-left-color: transparent;
+      transform: rotate(45deg);
+    }
+
+    /* Activity Feed */
+    .activity-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .activity-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      align-items: center;
+    }
+
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(139, 92, 246, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-primary);
+    }
+
+    .activity-info h4 { font-size: 14px; margin-bottom: 2px; }
+    .activity-info p { font-size: 12px; color: var(--text-muted); }
+
+    /* Forms in Panel */
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    input, select {
+      width: 100%;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--glass-border);
+      padding: 12px 16px;
+      border-radius: 8px;
+      color: white;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      border-color: var(--accent-primary);
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      visibility: hidden;
+      opacity: 0;
+      transition: 0.3s;
+    }
+
+    .overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .modal {
+      background: var(--bg-dark);
+      border: 1px solid var(--glass-border);
+      padding: 32px;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-card, .panel {
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    .stat-card:nth-child(2) { animation-delay: 0.1s; }
+    .stat-card:nth-child(3) { animation-delay: 0.2s; }
+    .stat-card:nth-child(4) { animation-delay: 0.3s; }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    <header>
+      <div class="brand">
+        <div class="logo"><i data-lucide="trending-up"></i></div>
+        <h1>MOOLAH MINDS</h1>
+      </div>
+      <div class="user-actions">
+        <div id="userInfo" style="display: none; text-align: right;">
+          <p id="userName" style="font-weight: 600;"></p>
+          <p style="font-size: 12px; color: var(--text-muted);">Week 1 Active</p>
+        </div>
+        <button id="loginTrigger" class="btn btn-primary"><i data-lucide="log-in"></i> Login</button>
+        <button id="logoutBtn" class="btn" style="display: none;"><i data-lucide="log-out"></i></button>
+      </div>
+    </header>
+
+    <div id="gameView" style="display: none;">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <i data-lucide="wallet"></i>
+            <span class="trend up"><i data-lucide="arrow-up-right"></i> +₹500</span>
+          </div>
+          <div class="stat-value" id="balanceVal">₹0.00</div>
+          <div class="stat-label">Total Balance</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <i data-lucide="credit-card"></i>
+          </div>
+          <div class="stat-value" id="creditVal">700</div>
+          <div class="stat-label">Credit Score</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <i data-lucide="briefcase"></i>
+          </div>
+          <div class="stat-value" id="salaryVal">₹0.00</div>
+          <div class="stat-label">Monthly Salary</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-header">
+            <i data-lucide="users"></i>
+          </div>
+          <div class="stat-value" id="socialVal">50</div>
+          <div class="stat-label">Social Standing</div>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <h2><i data-lucide="play-circle"></i> Weekly Actions</h2>
+            <button class="btn btn-primary" onclick="alert('Tick engine implementation coming soon!')">Advance Week</button>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="stat-card" style="background: rgba(255,255,255,0.02)">
+              <h4 style="margin-bottom: 12px;">Financial Decisions</h4>
+              <div class="input-group">
+                <label>Investment Strategy</label>
+                <select>
+                  <option>Conservative Savings</option>
+                  <option>Moderate Index Fund</option>
+                  <option>Aggressive Stocks</option>
+                </select>
+              </div>
+              <button class="btn" style="width: 100%;">Lock Decisions</button>
+            </div>
+            <div class="stat-card" style="background: rgba(255,255,255,0.02)">
+              <h4 style="margin-bottom: 12px;">Current Obligations</h4>
+              <div class="activity-list" id="obligationList">
+                <div class="activity-item">
+                  <div class="activity-icon"><i data-lucide="home"></i></div>
+                  <div class="activity-info">
+                    <h4>Rent / Mortgage</h4>
+                    <p>₹15,000.00 (Due Week 1)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2><i data-lucide="heart"></i> Well-being</h2>
+          </div>
+          <div class="status-ring">
+            <div class="val" id="wellBeingVal">75</div>
+          </div>
+          <p style="text-align: center; font-size: 14px; color: var(--text-muted); margin-bottom: 24px;">Your mental health and lifestyle balance is stable.</p>
+          
+          <h3 style="font-size: 16px; margin-bottom: 16px;">System Logs</h3>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon" style="color: var(--success);"><i data-lucide="check-circle"></i></div>
+              <div class="activity-info">
+                <h4>Welcome to Moolah Minds</h4>
+                <p>Game started successfully.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" style="text-align: center; padding: 100px 0;">
+      <i data-lucide="layout" style="width: 64px; height: 64px; color: var(--text-muted); margin-bottom: 24px;"></i>
+      <h2 style="font-size: 32px; margin-bottom: 16px;">Experience Financial Literacy</h2>
+      <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 32px;">Login to access your personalized simulator and start building your financial future.</p>
+      <button class="btn btn-primary btn-lg" style="padding: 16px 32px;" onclick="document.getElementById('loginOverlay').classList.add('active')">Get Started</button>
+    </div>
+  </div>
+
+  <!-- Login Overlay -->
+  <div class="overlay" id="loginOverlay">
+    <div class="modal">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+        <h2>Login</h2>
+        <button onclick="document.getElementById('loginOverlay').classList.remove('active')" style="background: none; border: none; color: white; cursor: pointer;"><i data-lucide="x"></i></button>
+      </div>
+      <div class="input-group">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="••••••••">
+      </div>
+      <button id="submitLogin" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;">Sign In</button>
+      <p style="text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 16px;">Don't have an account? <a href="#" style="color: var(--accent-secondary);">Register here</a></p>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+    const apiBase = 'http://localhost:3000';
+    let token = localStorage.getItem('moolah_token');
+    
+    // Formatting helper
+    const formatPaise = (paise) => {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 2
+      }).format(paise / 100);
+    };
+
+    const updateUI = async () => {
+      if (!token) {
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('gameView').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'none';
+        document.getElementById('loginTrigger').style.display = 'flex';
+        document.getElementById('logoutBtn').style.display = 'none';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${apiBase}/profiles`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+
+        const data = await res.json();
+        const profile = data.profiles[0];
+
+        if (profile) {
+          document.getElementById('emptyState').style.display = 'none';
+          document.getElementById('gameView').style.display = 'block';
+          document.getElementById('userInfo').style.display = 'block';
+          document.getElementById('userName').textContent = profile.name;
+          document.getElementById('loginTrigger').style.display = 'none';
+          document.getElementById('logoutBtn').style.display = 'flex';
+          
+          // Populate Stats
+          document.getElementById('balanceVal').textContent = formatPaise(0); // Balance is derived in M4
+          document.getElementById('salaryVal').textContent = formatPaise(profile.gameState.salary);
+          document.getElementById('creditVal').textContent = profile.gameState.creditScore;
+          document.getElementById('socialVal').textContent = profile.gameState.socialScore;
+          document.getElementById('wellBeingVal').textContent = profile.gameState.wellBeing;
+        } else {
+          // If logged in but no profile, show a prompt to create one
+          document.getElementById('emptyState').innerHTML = `
+            <h2 style="margin-bottom: 20px;">Ready to start your journey?</h2>
+            <button class="btn btn-primary" onclick="createInitialProfile()">Create First Profile</button>
+          `;
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+      }
+    };
+
+    const logout = () => {
+      token = null;
+      localStorage.removeItem('moolah_token');
+      updateUI();
+    };
+
+    const createInitialProfile = async () => {
+      const res = await fetch(`${apiBase}/profiles`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: "Player 1", difficulty: "BEGINNER" })
+      });
+      if (res.ok) updateUI();
+    };
+
+    document.getElementById('loginTrigger').addEventListener('click', () => {
+      document.getElementById('loginOverlay').classList.add('active');
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+
+    document.getElementById('submitLogin').addEventListener('click', async () => {
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPass').value;
+      
+      const res = await fetch(`${apiBase}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.token) {
+        token = data.token;
+        localStorage.setItem('moolah_token', token);
+        document.getElementById('loginOverlay').classList.remove('active');
+        updateUI();
+      } else {
+        alert(data.error || 'Login failed');
+      }
+    });
+
+    // Initialize
+    updateUI();
+  </script>
+</body>
+</html>

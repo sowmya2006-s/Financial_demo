@@ -330,7 +330,7 @@ model InvestmentHolding {
   id        String   @id @default(uuid()) @db.Uuid
   profileId String   @db.Uuid
   productCode String @db.VarChar(100)
-  productCategory ProductCategory @db.VarChar(20)
+  productCategory String @db.VarChar(20) // allowed values: INVESTMENT_TYPES
   units     Decimal  @db.Decimal(15, 6)
   averageCostBasis Decimal @db.Decimal(15, 4)
   currentNAV Decimal @db.Decimal(15, 4)
@@ -350,14 +350,7 @@ model InvestmentHolding {
   @@map("investment_holdings")
 }
 
-enum ProductCategory {
-  FD
-  MF_EQUITY
-  MF_DEBT
-  STOCKS
-  REAL_ESTATE
-  GOLD
-}
+// ProductCategory enum removed; using string fields with constants
 
 // TABLE 10: InvestmentTransactions - Every buy/sell transaction audit
 model InvestmentTransaction {
@@ -431,7 +424,7 @@ model ConsumptionItem {
   id        String   @id @default(uuid()) @db.Uuid
   profileId String   @db.Uuid
   decisionId String   @unique @db.Uuid
-  itemCategory ItemCategory @db.VarChar(20)
+  itemCategory String @db.VarChar(20) // allowed values: SPEND_CATEGORIES
   itemName  String   @db.VarChar(255)
   cost      Decimal  @db.Decimal(12, 2)
   purchasedWeek Int
@@ -447,13 +440,7 @@ model ConsumptionItem {
   @@map("consumption_items")
 }
 
-enum ItemCategory {
-  ELECTRONICS
-  VEHICLE
-  VACATION
-  FASHION
-  DINING
-}
+// ItemCategory enum removed; using string fields with constants
 
 // TABLE 13: WeeklySummaries - Pre-computed summaries for fast dashboard loading
 model WeeklySummary {
